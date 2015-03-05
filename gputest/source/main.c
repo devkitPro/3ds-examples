@@ -125,9 +125,9 @@ int main()
 	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 
 	MtxStack_Init(&projMtx);
-	MtxStack_Bind(&projMtx, VSH_FVEC_projMtx, VSH_ULEN_projMtx);
+	MtxStack_Bind(&projMtx, GPU_VERTEX_SHADER, VSH_FVEC_projMtx, VSH_ULEN_projMtx);
 	MtxStack_Init(&mdlvMtx);
-	MtxStack_Bind(&mdlvMtx, VSH_FVEC_mdlvMtx, VSH_ULEN_mdlvMtx);
+	MtxStack_Bind(&mdlvMtx, GPU_VERTEX_SHADER, VSH_FVEC_mdlvMtx, VSH_ULEN_mdlvMtx);
 
 	C3D_TexInit(&myTex, 64, 64, GPU_RGBA8);
 	C3D_TexUpload(&myTex, grass_bin);
