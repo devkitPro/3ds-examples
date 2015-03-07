@@ -21,8 +21,9 @@
 #define TOPSCR_COPYFLAG 0x01001000
 #endif
 
-u32* gpuDepthBuf;
-u32* gpuColorBuf;
+#define CLEAR_COLOR 0x80FF80FF
+
+C3D_RenderBuf rbTop, rbBot;
 
 static DVLB_s *pVsh, *pGsh;
 static shaderProgram_s shader;
@@ -49,23 +50,14 @@ static const vertex_t vertices[] =
 	{{-0.5f, +0.5f, -4.0f}, {0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
 };
 
-//#define BG_COLOR 0x68B0D8FF
-#define BG_COLOR 0x80FF80FF
-
 #define FOVY (2.0f/15)
-
-static inline void clearGpuBuffers(u32 color)
-{
-	GX_SetMemoryFill(NULL, gpuColorBuf, color, gpuColorBuf+0x2EE00, 0x201, gpuDepthBuf, 0x00000000, gpuDepthBuf+0x2EE00, 0x201);
-	gspWaitForPSC0();
-}
 
 static C3D_VBO myVbo;
 static C3D_Tex myTex;
 
 static void drawScene(float trX, float trY)
 {
-	GPU_SetViewport((u32*)osConvertVirtToPhys((u32)gpuDepthBuf), (u32*)osConvertVirtToPhys((u32)gpuColorBuf), 0, 0, TOPSCR_WIDTH, 400);
+	C3D_RenderBufBind(&rbTop);
 
 	C3D_TexBind(0, &myTex);
 
@@ -88,7 +80,7 @@ static void drawScene(float trX, float trY)
 
 static void drawSceneBottom(float trX, float trY)
 {
-	GPU_SetViewport((u32*)osConvertVirtToPhys((u32)gpuDepthBuf), (u32*)osConvertVirtToPhys((u32)gpuColorBuf), 0, 0, 240/**2*/, 320);
+	C3D_RenderBufBind(&rbBot);
 
 	C3D_TexBind(0, NULL);
 
@@ -119,8 +111,10 @@ int main()
 	printf("Testing...\n");
 #endif
 
-	gpuDepthBuf = (u32*)vramAlloc(400*240*2*sizeof(float));
-	gpuColorBuf = (u32*)vramAlloc(400*240*2*sizeof(u32));
+	C3D_RenderBufInit(&rbTop, TOPSCR_WIDTH, 400, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+	C3D_RenderBufInit(&rbBot, 240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+	rbTop.clearColor = CLEAR_COLOR;
+	rbBot.clearColor = CLEAR_COLOR;
 
 	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 
@@ -154,7 +148,9 @@ int main()
 	C3D_VBOInit(&myVbo, sizeof(vertices));
 	C3D_VBOAddData(&myVbo, vertices, sizeof(vertices), sizeof(vertices)/sizeof(vertex_t));
 
-	clearGpuBuffers(BG_COLOR);
+	// Clear buffers
+	C3D_RenderBufClear(&rbTop);
+	C3D_RenderBufClear(&rbBot);
 
 	float trX = 0, trY = 0;
 	float zDist = 0.1f;
@@ -188,30 +184,22 @@ int main()
 		float czDist = zDist*slider/2;
 
 		drawScene(trX-czDist, trY);
-
-		GX_SetDisplayTransfer(NULL, gpuColorBuf, GX_BUFFER_DIM(TOPSCR_WIDTH,400), (u32*)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL), GX_BUFFER_DIM(TOPSCR_WIDTH,400), TOPSCR_COPYFLAG);
-		gspWaitForPPF();
+		C3D_RenderBufTransfer(&rbTop, (u32*)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL), TOPSCR_COPYFLAG);
 
 		if (slider > 0.0f)
 		{
-			clearGpuBuffers(BG_COLOR);
-
+			C3D_RenderBufClear(&rbTop);
 			drawScene(trX+czDist, trY);
-
-			GX_SetDisplayTransfer(NULL, gpuColorBuf, GX_BUFFER_DIM(TOPSCR_WIDTH,400), (u32*)gfxGetFramebuffer(GFX_TOP, GFX_RIGHT, NULL, NULL), GX_BUFFER_DIM(TOPSCR_WIDTH,400), TOPSCR_COPYFLAG);
-			gspWaitForPPF();
+			C3D_RenderBufTransfer(&rbTop, (u32*)gfxGetFramebuffer(GFX_TOP, GFX_RIGHT, NULL, NULL), TOPSCR_COPYFLAG);
 		}
+
+		C3D_RenderBufClear(&rbTop); // In theory this could be async but meh...
 		
 #ifndef DEBUG
-		clearGpuBuffers(BG_COLOR);
-
 		drawSceneBottom(trX, trY);
-
-		GX_SetDisplayTransfer(NULL, gpuColorBuf, GX_BUFFER_DIM(240,320), (u32*)gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL), GX_BUFFER_DIM(240,320), 0x1000);
-		gspWaitForPPF();
+		C3D_RenderBufTransfer(&rbBot, (u32*)gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL), 0x1000);
+		C3D_RenderBufClear(&rbBot); // Same here
 #endif
-
-		clearGpuBuffers(BG_COLOR);
 	}
 
 	C3D_Fini();
