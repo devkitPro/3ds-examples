@@ -134,7 +134,7 @@ int main()
 	shaderProgramInit(&shader);
 	shaderProgramSetVsh(&shader, &pVsh->DVLE[0]);
 	shaderProgramSetGsh(&shader, &pGsh->DVLE[0], 3*5); // Comment this out to disable the geoshader
-	shaderProgramUse(&shader);
+	C3D_BindProgram(&shader);
 
 	// Configure attributes
 	C3D_AttrInfo* attrInfo = C3D_GetAttrInfo();
