@@ -161,12 +161,12 @@ static void sceneRender(void)
 	angleY += M_PI / 360;
 
 	// Update the uniforms
-	memcpy(C3D_FVUnifWritePtr(GPU_VERTEX_SHADER, uLoc_projection,   4), &projection, sizeof(C3D_Mtx));
-	memcpy(C3D_FVUnifWritePtr(GPU_VERTEX_SHADER, uLoc_modelView,    4), &modelView,  sizeof(C3D_Mtx));
-	memcpy(C3D_FVUnifWritePtr(GPU_VERTEX_SHADER, uLoc_material,     4), &material,   sizeof(C3D_Mtx));
-	memcpy(C3D_FVUnifWritePtr(GPU_VERTEX_SHADER, uLoc_lightVec,     1), (float[]){0.0f, -1.0f, 0.0f, 0.0f}, sizeof(C3D_FVec));
-	memcpy(C3D_FVUnifWritePtr(GPU_VERTEX_SHADER, uLoc_lightHalfVec, 1), (float[]){0.0f, -1.0f, 0.0f, 0.0f}, sizeof(C3D_FVec));
-	memcpy(C3D_FVUnifWritePtr(GPU_VERTEX_SHADER, uLoc_lightClr,     1), (float[]){1.0f,  1.0f, 1.0f, 1.0f}, sizeof(C3D_FVec));
+	C3D_FVUnifMtx(GPU_VERTEX_SHADER, uLoc_projection,   &projection);
+	C3D_FVUnifMtx(GPU_VERTEX_SHADER, uLoc_modelView,    &modelView);
+	C3D_FVUnifMtx(GPU_VERTEX_SHADER, uLoc_material,     &material);
+	C3D_FVUnifSet(GPU_VERTEX_SHADER, uLoc_lightVec,     0.0f, 0.0f, -1.0f, 0.0f);
+	C3D_FVUnifSet(GPU_VERTEX_SHADER, uLoc_lightHalfVec, 0.0f, 0.0f, -1.0f, 0.0f);
+	C3D_FVUnifSet(GPU_VERTEX_SHADER, uLoc_lightClr,     1.0f, 1.0f,  1.0f, 1.0f);
 
 	// Draw the VBO
 	C3D_DrawArrays(GPU_TRIANGLES, 0, vertex_list_count);
