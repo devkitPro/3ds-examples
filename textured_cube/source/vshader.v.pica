@@ -69,18 +69,15 @@
 
 	; r1 += specularColor * lightClr * shininessLevel
 	mul r2, lightClr, r0.yyyy
-	mul r2, mat_spe,  r2
-	add r1, r2,       r1
+	mad r1, r2, mat_spe, r1
 
 	; r1 += diffuseColor * lightClr * diffuseLevel
 	mul r2, lightClr, r0.xxxx
-	mul r2, mat_dif,  r2
-	add r1, r2,       r1
+	mad r1, r2, mat_dif, r1
 
 	; r1 += ambientColor * lightClr
 	mov r2, lightClr
-	mul r2, mat_amb, r2
-	add r1, r2,      r1
+	mad r1, r2, mat_amb, r1
 
 	; outclr = clamp r1 to [0,1]
 	min outclr, ones, r1

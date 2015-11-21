@@ -185,8 +185,6 @@ static void sceneExit(void)
 	DVLB_Free(vshader_dvlb);
 }
 
-#define CONFIG_3D_SLIDERSTATE (*(volatile float*)0x1FF81080)
-
 int main()
 {
 	// Initialize graphics
@@ -217,7 +215,7 @@ int main()
 		if (kDown & KEY_START)
 			break; // break in order to return to hbmenu
 
-		float slider = CONFIG_3D_SLIDERSTATE;
+		float slider = osGet3DSliderState();
 		float iod = slider/3;
 
 		// Render the scene

@@ -46,17 +46,6 @@
 
 	; Transform the normal vector with the modelView matrix
 	; TODO: use a separate normal matrix that is the transpose of the inverse of modelView
-	; r1 = normalize(modelView * innrm)
-	;mov r0.xyz, innrm
-	;mov r0.w,   zeros
-	;dp4 r1.x,   modelView[0], r0
-	;dp4 r1.y,   modelView[1], r0
-	;dp4 r1.z,   modelView[2], r0
-	;mov r1.w,   zeros
-	;dp3 r2,     r1, r1 ; r2 = x^2+y^2+z^2 for each component
-	;rsq r2,     r2     ; r2 = 1/sqrt(r2)  ''
-	;mul r1,     r2, r1 ; r1 = r1*r2
-
 	dp3 r14.x, modelView[0], innrm
 	dp3 r14.y, modelView[1], innrm
 	dp3 r14.z, modelView[2], innrm
