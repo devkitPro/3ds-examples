@@ -10,7 +10,6 @@
 #include "test_gsh.shader.h"
 #include "grass_bin.h"
 
-#define VAR_3D_SLIDERSTATE (*(volatile float*)0x1FF81080)
 #define EXTENDED_TOPSCR_RESOLUTION
 
 #ifndef EXTENDED_TOPSCR_RESOLUTION
@@ -37,7 +36,7 @@ typedef struct
 	float color[3];
 } vertex_t;
 
-static const vertex_t vertices[] =
+static const vertex_t vertex_list[] =
 {
 	// First triangle
 	{{-0.5f, +0.5f, -4.0f}, {0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
@@ -50,9 +49,11 @@ static const vertex_t vertices[] =
 	{{-0.5f, +0.5f, -4.0f}, {0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
 };
 
+#define vertex_list_count (sizeof(vertex_list)/sizeof(vertex_list[0]))
+
 #define FOVY (2.0f/15)
 
-static C3D_VBO myVbo;
+static void* myVbo;
 static C3D_Tex myTex;
 
 static void drawScene(float trX, float trY)
@@ -73,7 +74,7 @@ static void drawScene(float trX, float trY)
 	MtxStack_Update(&projMtx);
 	MtxStack_Update(&mdlvMtx);
 
-	C3D_DrawArrays(GPU_TRIANGLES, 0, myVbo.vertexCount);
+	C3D_DrawArrays(GPU_TRIANGLES, 0, vertex_list_count);
 
 	C3D_Flush();
 }
@@ -96,7 +97,7 @@ static void drawSceneBottom(float trX, float trY)
 	MtxStack_Update(&projMtx);
 	MtxStack_Update(&mdlvMtx);
 
-	C3D_DrawArrays(GPU_TRIANGLES, 0, myVbo.vertexCount);
+	C3D_DrawArrays(GPU_TRIANGLES, 0, vertex_list_count);
 
 	C3D_Flush();
 }
@@ -144,13 +145,13 @@ int main()
 	AttrInfo_AddLoader(attrInfo, 2, GPU_FLOAT, 3); // vertex color
 
 	// Configure VBO
-	C3D_VBOInit(&myVbo, sizeof(vertices));
-	C3D_VBOAddData(&myVbo, vertices, sizeof(vertices), sizeof(vertices)/sizeof(vertex_t));
+	myVbo = linearAlloc(sizeof(vertex_list));
+	memcpy(myVbo, vertex_list, sizeof(vertex_list));
 
 	// Configure buffers
 	C3D_BufInfo* bufInfo = C3D_GetBufInfo();
 	BufInfo_Init(bufInfo);
-	BufInfo_Add(bufInfo, myVbo.data, sizeof(vertex_t), 3, 0x210);
+	BufInfo_Add(bufInfo, myVbo, sizeof(vertex_t), 3, 0x210);
 
 	// Clear renderbuffers
 	C3D_RenderBufClear(&rbTop);
@@ -184,7 +185,7 @@ int main()
 		if (kHeld & KEY_R)
 			zDist += 0.005f;
 
-		float slider = VAR_3D_SLIDERSTATE;
+		float slider = osGet3DSliderState();
 		float czDist = zDist*slider/2;
 
 		drawScene(trX-czDist, trY);
