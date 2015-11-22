@@ -43,6 +43,10 @@ static void sceneInit(void)
 	C3D_AttrInfo* attrInfo = C3D_GetAttrInfo();
 	AttrInfo_Init(attrInfo);
 	AttrInfo_AddLoader(attrInfo, 0, GPU_FLOAT, 3); // v0=position
+	AttrInfo_AddFixed(attrInfo, 1); // v1=color
+
+	// Set the fixed attribute (color) to solid white
+	C3D_FixedAttribSet(1, 1.0, 1.0, 1.0, 1.0);
 
 	// Compute the projection matrix
 	Mtx_OrthoTilt(&projection, 0.0, 400.0, 0.0, 240.0, 0.0, 1.0);
