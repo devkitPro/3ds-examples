@@ -163,8 +163,7 @@ int main()
 	// Main loop
 	while (aptMainLoop())
 	{
-		gspWaitForVBlank();
-		gfxSwapBuffersGpu();
+		C3D_VideoSync();
 		hidScanInput();
 
 		u32 kDown = hidKeysDown();

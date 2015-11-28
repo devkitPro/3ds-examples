@@ -204,9 +204,8 @@ int main()
 	// Main loop
 	while (aptMainLoop())
 	{
-		gspWaitForVBlank();  // Synchronize with the start of VBlank
-		gfxSwapBuffersGpu(); // Swap the framebuffers so that the frame that we rendered last frame is now visible
-		hidScanInput();      // Read the user input
+		C3D_VideoSync();
+		hidScanInput();
 
 		// Respond to user input
 		u32 kDown = hidKeysDown();
@@ -218,9 +217,6 @@ int main()
 		C3D_Flush();
 		C3D_RenderBufTransfer(&rb, (u32*)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL), DISPLAY_TRANSFER_FLAGS);
 		C3D_RenderBufClear(&rb);
-
-		// Flush the framebuffers out of the data cache (not necessary with pure GPU rendering)
-		gfxFlushBuffers();
 	}
 
 	// Deinitialize the scene
