@@ -47,7 +47,7 @@ static void sceneInit(void)
 static void sceneRender(void)
 {
 	// Update the uniforms
-	C3D_FVUnifMtx(GPU_VERTEX_SHADER, uLoc_projection, &projection);
+	C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_projection, &projection);
 
 	// Draw the triangle directly
 	C3D_ImmDrawBegin(GPU_TRIANGLES);

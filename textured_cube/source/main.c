@@ -161,9 +161,9 @@ static void sceneRender(void)
 	angleY += M_PI / 360;
 
 	// Update the uniforms
-	C3D_FVUnifMtx(GPU_VERTEX_SHADER, uLoc_projection,   &projection);
-	C3D_FVUnifMtx(GPU_VERTEX_SHADER, uLoc_modelView,    &modelView);
-	C3D_FVUnifMtx(GPU_VERTEX_SHADER, uLoc_material,     &material);
+	C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_projection, &projection);
+	C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_modelView,  &modelView);
+	C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_material,   &material);
 	C3D_FVUnifSet(GPU_VERTEX_SHADER, uLoc_lightVec,     0.0f, 0.0f, -1.0f, 0.0f);
 	C3D_FVUnifSet(GPU_VERTEX_SHADER, uLoc_lightHalfVec, 0.0f, 0.0f, -1.0f, 0.0f);
 	C3D_FVUnifSet(GPU_VERTEX_SHADER, uLoc_lightClr,     1.0f, 1.0f,  1.0f, 1.0f);
