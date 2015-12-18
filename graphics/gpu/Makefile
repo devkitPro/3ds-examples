@@ -1,20 +1,7 @@
-SUBDIRS:= $(shell ls | egrep -v '^(CVS)$$')
-
-DATESTRING	:=	$(shell date +%Y)$(shell date +%m)$(shell date +%d)
-
-#---------------------------------------------------------------------------------
-all: examples
-#---------------------------------------------------------------------------------
-	@rm -fr bin
-	@mkdir -p bin
-	@find . -name "*.3dsx" ! -path "./bin/*" -exec cp -fv {} bin \;
-
-examples:
+SUBDIRS:= `ls | egrep -v '^(CVS)$$'`
+all:
 	@for i in $(SUBDIRS); do if test -e $$i/Makefile ; then $(MAKE) -C $$i || { exit 1;} fi; done;
-
-#---------------------------------------------------------------------------------
 clean:
-#---------------------------------------------------------------------------------
-	@rm -fr bin
-	@rm -f *.bz2
 	@for i in $(SUBDIRS); do if test -e $$i/Makefile ; then $(MAKE)  -C $$i clean || { exit 1;} fi; done;
+install:
+	@for i in $(SUBDIRS); do if test -e $$i/Makefile ; then $(MAKE)  -C $$i install || { exit 1;} fi; done;
