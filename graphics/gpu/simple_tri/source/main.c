@@ -93,12 +93,10 @@ int main()
 	gfxInitDefault();
 	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 
-	// Initialize the renderbuffer
-	static C3D_RenderBuf rb;
-	C3D_RenderBufInit(&rb, 240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
-	rb.clearColor = CLEAR_COLOR;
-	C3D_RenderBufClear(&rb);
-	C3D_RenderBufBind(&rb);
+	// Initialize the render target
+	C3D_RenderTarget* target = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+	C3D_RenderTargetSetClear(target, C3D_CLEAR_ALL, CLEAR_COLOR, 0);
+	C3D_RenderTargetSetOutput(target, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
 
 	// Initialize the scene
 	sceneInit();
@@ -106,7 +104,6 @@ int main()
 	// Main loop
 	while (aptMainLoop())
 	{
-		C3D_VideoSync();
 		hidScanInput();
 
 		// Respond to user input
@@ -115,10 +112,10 @@ int main()
 			break; // break in order to return to hbmenu
 
 		// Render the scene
-		sceneRender();
-		C3D_Flush();
-		C3D_RenderBufTransfer(&rb, (u32*)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL), DISPLAY_TRANSFER_FLAGS);
-		C3D_RenderBufClear(&rb);
+		C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+			C3D_FrameDrawOn(target);
+			sceneRender();
+		C3D_FrameEnd(0);
 	}
 
 	// Deinitialize the scene
