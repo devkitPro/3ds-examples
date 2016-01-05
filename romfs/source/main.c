@@ -36,9 +36,9 @@ int main()
 	else
 	{
 		printf("romfs Init Successful!\n");
-		printfile("folder/file.txt");
+		printfile("romfs:/folder/file.txt");
 		// Test reading a file with non-ASCII characters in the name
-		printfile("フォルダ/ファイル.txt");
+		printfile("romfs:/フォルダ/ファイル.txt");
 	}
 
 	// Main loop
