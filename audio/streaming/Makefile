@@ -29,6 +29,15 @@ include $(DEVKITARM)/3ds_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 
+SOURCES		:=	source
+DATA		:=	data
+INCLUDES	:=	include
+#ROMFS		:=	romfs
+
+
+APP_DESCRIPTION	:= libctru audio streaming example
+APP_AUTHOR		:= WinterMute
+
 ifeq ($(MAKECMDGOALS),Debug)
 
 BUILD	:=	Debug
@@ -44,10 +53,6 @@ BUILD	:=	build
 
 endif
 
-SOURCES		:=	source
-DATA		:=	data
-INCLUDES	:=	include
-#ROMFS		:=	romfs
 
 #---------------------------------------------------------------------------------
 # options for code generation
