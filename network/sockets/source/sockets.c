@@ -16,8 +16,6 @@
 
 #include <3ds.h>
 
-static PrintConsole main_console;
-
 #define SOC_ALIGN       0x1000
 #define SOC_BUFFERSIZE  0x100000
 
@@ -41,6 +39,14 @@ const static char http_get_index[] = "GET / HTTP/1.1\r\n";
 
 
 //---------------------------------------------------------------------------------
+void socShutdown() {
+//---------------------------------------------------------------------------------
+	printf("waiting for socExit...\n");
+	socExit();
+
+}
+
+//---------------------------------------------------------------------------------
 int main(int argc, char **argv) {
 //---------------------------------------------------------------------------------
 	int ret;
@@ -52,24 +58,32 @@ int main(int argc, char **argv) {
 	static int hits=0;
 
 	gfxInitDefault();
+
+	// register gfxExit to be run when app quits
+	// this can help simplify error handling
 	atexit(gfxExit);
-	consoleInit(GFX_TOP, &main_console);
+
+	consoleInit(GFX_TOP, NULL);
 
 	printf ("\nlibctru sockets demo\n");
 
-	/* allocate buffer for SOC service */
+	// allocate buffer for SOC service
 	SOC_buffer = (u32*)memalign(SOC_ALIGN, SOC_BUFFERSIZE);
 
 	if(SOC_buffer == NULL) {
 		failExit("memalign: failed to allocate\n");
 	}
 
+	// Now intialise soc:u service
 	if ((ret = socInit(SOC_buffer, SOC_BUFFERSIZE)) != 0) {
     	failExit("socInit: 0x%08X\n", (unsigned int)ret);
 	}
 
-	atexit((voidfn)socExit);
+	// register socShutdown to run at exit
+	// atexit functions execute in reverse order so this runs before gfxExit
+	atexit(socShutdown);
 
+	// libctru provides BSD sockets so most code from here is standard
 	clientlen = sizeof(client);
 
 	sock = socket (AF_INET, SOCK_STREAM, IPPROTO_IP);
@@ -92,6 +106,7 @@ int main(int argc, char **argv) {
 		failExit("bind: %d %s\n", errno, strerror(errno));
 	}
 
+	// Set socket non blocking so we can still read input to exit
 	fcntl(sock, F_SETFL, fcntl(sock, F_GETFL, 0) | O_NONBLOCK);
 
 	if ( (ret = listen( sock, 5)) ) {
@@ -109,14 +124,12 @@ int main(int argc, char **argv) {
 				failExit("accept: %d %s\n", errno, strerror(errno));
 			}
 		} else {
+			// set client socket to blocking to simplify sending data back
 			fcntl(csock, F_SETFL, fcntl(csock, F_GETFL, 0) & ~O_NONBLOCK);
 			printf("Connecting port %d from %s\n", client.sin_port, inet_ntoa(client.sin_addr));
 			memset (temp, 0, 1026);
 
 			ret = recv (csock, temp, 1024, 0);
-
-			printf("Received %d bytes\n", ret);
-			printf("%s\n",temp);
 
 			if ( !strncmp( temp, http_get_index, strlen(http_get_index) ) ) {
 				hits++;
@@ -133,9 +146,10 @@ int main(int argc, char **argv) {
 		}
 
 		u32 kDown = hidKeysDown();
-		if (kDown & KEY_START) exit(0);
+		if (kDown & KEY_START) break;
 	}
 
+	close(sock);
 
 	return 0;
 }
@@ -144,7 +158,6 @@ int main(int argc, char **argv) {
 void failExit(const char *fmt, ...) {
 //---------------------------------------------------------------------------------
 
-	if (SOC_buffer != NULL) free(SOC_buffer);
 	if(sock>0) close(sock);
 	if(csock>0) close(csock);
 
