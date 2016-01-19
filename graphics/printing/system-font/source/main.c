@@ -22,7 +22,7 @@ static C3D_Tex* glyphSheets;
 static textVertex_s* textVtxArray;
 static int textVtxArrayPos;
 
-#define TEXT_VTX_ARRAY_COUNT (6*1024)
+#define TEXT_VTX_ARRAY_COUNT (4*1024)
 
 static void sceneInit(void)
 {
@@ -128,19 +128,17 @@ static void renderText(float x, float y, float scaleX, float scaleY, bool baseli
 			}
 
 			int arrayIndex = textVtxArrayPos;
-			if ((arrayIndex+6) >= TEXT_VTX_ARRAY_COUNT)
+			if ((arrayIndex+4) >= TEXT_VTX_ARRAY_COUNT)
 				break; // We can't render more characters
 
 			// Add the vertices to the array
-			addTextVertex(x+data.vtxcoord.left,  y+data.vtxcoord.top,    data.texcoord.left,  data.texcoord.top);
 			addTextVertex(x+data.vtxcoord.left,  y+data.vtxcoord.bottom, data.texcoord.left,  data.texcoord.bottom);
 			addTextVertex(x+data.vtxcoord.right, y+data.vtxcoord.bottom, data.texcoord.right, data.texcoord.bottom);
 			addTextVertex(x+data.vtxcoord.left,  y+data.vtxcoord.top,    data.texcoord.left,  data.texcoord.top);
-			addTextVertex(x+data.vtxcoord.right, y+data.vtxcoord.bottom, data.texcoord.right, data.texcoord.bottom);
 			addTextVertex(x+data.vtxcoord.right, y+data.vtxcoord.top,    data.texcoord.right, data.texcoord.top);
 
 			// Draw the glyph
-			C3D_DrawArrays(GPU_TRIANGLES, arrayIndex, 6);
+			C3D_DrawArrays(GPU_TRIANGLE_STRIP, arrayIndex, 4);
 
 			x += data.xAdvance;
 
