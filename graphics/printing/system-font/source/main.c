@@ -12,11 +12,17 @@
 	GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB8) | \
 	GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
 
+typedef struct { float position[3]; float texcoord[2]; } textVertex_s;
+
 static DVLB_s* vshader_dvlb;
 static shaderProgram_s program;
 static int uLoc_projection;
 static C3D_Mtx projection;
 static C3D_Tex* glyphSheets;
+static textVertex_s* textVtxArray;
+static int textVtxArrayPos;
+
+#define TEXT_VTX_ARRAY_COUNT (6*1024)
 
 static void sceneInit(void)
 {
@@ -30,7 +36,6 @@ static void sceneInit(void)
 	uLoc_projection = shaderInstanceGetUniformLocation(program.vertexShader, "projection");
 
 	// Configure attributes for use with the vertex shader
-	// Attribute format and element count are ignored in immediate mode
 	C3D_AttrInfo* attrInfo = C3D_GetAttrInfo();
 	AttrInfo_Init(attrInfo);
 	AttrInfo_AddLoader(attrInfo, 0, GPU_FLOAT, 3); // v0=position
@@ -57,6 +62,9 @@ static void sceneInit(void)
 		tex->param = GPU_TEXTURE_MAG_FILTER(GPU_LINEAR) | GPU_TEXTURE_MIN_FILTER(GPU_LINEAR)
 			| GPU_TEXTURE_WRAP_S(GPU_CLAMP_TO_EDGE) | GPU_TEXTURE_WRAP_T(GPU_CLAMP_TO_EDGE);
 	}
+
+	// Create the text vertex array
+	textVtxArray = (textVertex_s*)linearAlloc(sizeof(textVertex_s)*TEXT_VTX_ARRAY_COUNT);
 }
 
 static void setTextColor(u32 color)
@@ -70,14 +78,30 @@ static void setTextColor(u32 color)
 	C3D_TexEnvColor(env, color);
 }
 
+static void addTextVertex(float vx, float vy, float tx, float ty)
+{
+	textVertex_s* vtx = &textVtxArray[textVtxArrayPos++];
+	vtx->position[0] = vx;
+	vtx->position[1] = vy;
+	vtx->position[2] = 0.5f;
+	vtx->texcoord[0] = tx;
+	vtx->texcoord[1] = ty;
+}
+
 static void renderText(float x, float y, float scaleX, float scaleY, bool baseline, const char* text)
 {
 	ssize_t  units;
 	uint32_t code;
 
+	// Configure buffers
+	C3D_BufInfo* bufInfo = C3D_GetBufInfo();
+	BufInfo_Init(bufInfo);
+	BufInfo_Add(bufInfo, textVtxArray, sizeof(textVertex_s), 2, 0x10);
+
 	const uint8_t* p = (const uint8_t*)text;
 	float firstX = x;
 	u32 flags = GLYPH_POS_CALC_VTXCOORD | (baseline ? GLYPH_POS_AT_BASELINE : 0);
+	int lastSheet = -1;
 	do
 	{
 		if (!*p) break;
@@ -96,30 +120,27 @@ static void renderText(float x, float y, float scaleX, float scaleY, bool baseli
 			fontGlyphPos_s data;
 			fontCalcGlyphPos(&data, glyphIdx, flags, scaleX, scaleY);
 
-			C3D_TexBind(0, &glyphSheets[data.sheetIndex]);
+			// Bind the correct texture sheet
+			if (data.sheetIndex != lastSheet)
+			{
+				lastSheet = data.sheetIndex;
+				C3D_TexBind(0, &glyphSheets[lastSheet]);
+			}
 
-			// Draw the glyph directly
-			C3D_ImmDrawBegin(GPU_TRIANGLES);
+			int arrayIndex = textVtxArrayPos;
+			if ((arrayIndex+6) >= TEXT_VTX_ARRAY_COUNT)
+				break; // We can't render more characters
 
-			C3D_ImmSendAttrib(x+data.vtxcoord.left, y+data.vtxcoord.top, 0.5f, 0.0f);
-			C3D_ImmSendAttrib(  data.texcoord.left,   data.texcoord.top, 0.0, 0.0);
+			// Add the vertices to the array
+			addTextVertex(x+data.vtxcoord.left,  y+data.vtxcoord.top,    data.texcoord.left,  data.texcoord.top);
+			addTextVertex(x+data.vtxcoord.left,  y+data.vtxcoord.bottom, data.texcoord.left,  data.texcoord.bottom);
+			addTextVertex(x+data.vtxcoord.right, y+data.vtxcoord.bottom, data.texcoord.right, data.texcoord.bottom);
+			addTextVertex(x+data.vtxcoord.left,  y+data.vtxcoord.top,    data.texcoord.left,  data.texcoord.top);
+			addTextVertex(x+data.vtxcoord.right, y+data.vtxcoord.bottom, data.texcoord.right, data.texcoord.bottom);
+			addTextVertex(x+data.vtxcoord.right, y+data.vtxcoord.top,    data.texcoord.right, data.texcoord.top);
 
-			C3D_ImmSendAttrib(x+data.vtxcoord.left, y+data.vtxcoord.bottom, 0.5f, 0.0f);
-			C3D_ImmSendAttrib(  data.texcoord.left,   data.texcoord.bottom, 0.0, 0.0);
-
-			C3D_ImmSendAttrib(x+data.vtxcoord.right, y+data.vtxcoord.bottom, 0.5f, 0.0f);
-			C3D_ImmSendAttrib(  data.texcoord.right,   data.texcoord.bottom, 0.0, 0.0);
-
-			C3D_ImmSendAttrib(x+data.vtxcoord.left, y+data.vtxcoord.top, 0.5f, 0.0f);
-			C3D_ImmSendAttrib(  data.texcoord.left,   data.texcoord.top, 0.0, 0.0);
-
-			C3D_ImmSendAttrib(x+data.vtxcoord.right, y+data.vtxcoord.bottom, 0.5f, 0.0f);
-			C3D_ImmSendAttrib(  data.texcoord.right,   data.texcoord.bottom, 0.0, 0.0);
-
-			C3D_ImmSendAttrib(x+data.vtxcoord.right, y+data.vtxcoord.top, 0.5f, 0.0f);
-			C3D_ImmSendAttrib(  data.texcoord.right,   data.texcoord.top, 0.0, 0.0);
-
-			C3D_ImmDrawEnd();
+			// Draw the glyph
+			C3D_DrawArrays(GPU_TRIANGLES, arrayIndex, 6);
 
 			x += data.xAdvance;
 
@@ -216,6 +237,7 @@ int main()
 
 		// Render the scene
 		C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+			textVtxArrayPos = 0; // Clear the text vertex array
 			C3D_FrameDrawOn(target);
 			sceneRender(size);
 		C3D_FrameEnd(0);
