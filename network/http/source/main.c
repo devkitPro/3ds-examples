@@ -66,7 +66,7 @@ int main()
 	httpcContext context;
 
 	gfxInitDefault();
-	httpcInit();
+	httpcInit(0);
 
 	consoleInit(GFX_BOTTOM,NULL);
 
