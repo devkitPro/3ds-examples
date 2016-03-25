@@ -153,7 +153,7 @@ static void sceneInit(void) {
 	C3D_TexInit(&spritesheet_tex, width, height, GPU_RGBA8);
 
 	// Convert image to 3DS tiled texture format
-	GX_DisplayTransfer ((u32*)gpusrc, GX_BUFFER_DIM(width,height), (u32*)spritesheet_tex.data, GX_BUFFER_DIM(width,height), TEXTURE_TRANSFER_FLAGS);
+	C3D_SafeDisplayTransfer ((u32*)gpusrc, GX_BUFFER_DIM(width,height), (u32*)spritesheet_tex.data, GX_BUFFER_DIM(width,height), TEXTURE_TRANSFER_FLAGS);
 	gspWaitForPPF();
 
 	C3D_TexSetFilter(&spritesheet_tex, GPU_LINEAR, GPU_NEAREST);
