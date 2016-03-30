@@ -190,8 +190,9 @@ int main()
 			{
 				network_request("yls8.mtheall.com");
 				sslcExit();
-				socExit();
 			}
+
+			socExit();
 		}
 	}
 
