@@ -89,7 +89,7 @@ void network_request(char *hostname)
 		return;
 	}
 
-	ret = sslcCreateContext(&sslc_context, sockfd, 0, hostname);
+	ret = sslcCreateContext(&sslc_context, sockfd, SSLCOPT_Default, hostname);
 	if(R_FAILED(ret))
 	{
 		printf("sslcCreateContext() failed: 0x%08x.\n", (unsigned int)ret);
@@ -136,7 +136,7 @@ void network_request(char *hostname)
 
 	memset(readbuf, 0, sizeof(readbuf));
 
-	ret = sslcRead(&sslc_context, readbuf, sizeof(readbuf)-1, 0);
+	ret = sslcRead(&sslc_context, readbuf, sizeof(readbuf)-1, false);
 	if(R_FAILED(ret))
 	{
 		printf("sslcWrite() failed: 0x%08x.\n", (unsigned int)ret);
