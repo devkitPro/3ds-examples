@@ -41,6 +41,7 @@ void uds_test()
 	u32 *tmpbuf;
 	size_t tmpbuf_size;
 
+	u8 data_channel = 1;
 	udsNetworkStruct networkstruct;
 	udsBindContext bindctx;
 	udsNetworkScanInfo *networks = NULL;
@@ -139,7 +140,7 @@ void uds_test()
 		printf("Connecting to the network...\n");
 		for(pos=0; pos<10; pos++)
 		{
-			ret = udsConnectNetwork(&network->network, passphrase, strlen(passphrase)+1, &bindctx, UDS_BROADCAST_NETWORKNODEID, UDSCONTYPE_Client);
+			ret = udsConnectNetwork(&network->network, passphrase, strlen(passphrase)+1, &bindctx, UDS_BROADCAST_NETWORKNODEID, UDSCONTYPE_Client, data_channel);
 			if(R_FAILED(ret))
 			{
 				printf("udsConnectNetwork() returned 0x%08x.\n", (unsigned int)ret);
@@ -194,7 +195,7 @@ void uds_test()
 		udsGenerateDefaultNetworkStruct(&networkstruct, wlancommID, 0, UDS_MAXNODES);
 
 		printf("Creating the network...\n");
-		ret = udsCreateNetwork(&networkstruct, passphrase, strlen(passphrase)+1, &bindctx);//The input you use for the passphrase doesn't matter since it's a raw buffer.
+		ret = udsCreateNetwork(&networkstruct, passphrase, strlen(passphrase)+1, &bindctx, data_channel);//The input you use for the passphrase doesn't matter since it's a raw buffer.
 		if(R_FAILED(ret))
 		{
 			printf("udsCreateNetwork() returned 0x%08x.\n", (unsigned int)ret);
@@ -258,7 +259,7 @@ void uds_test()
 		//When the output from hidKeysHeld() changes, send it over the network.
 		if(transfer_data != prev_transfer_data)
 		{
-			ret = udsSendTo(UDS_BROADCAST_NETWORKNODEID, UDS_SEND_NETFLAGS_DEFAULT, UDS_SENDFLAG_Default, &transfer_data, sizeof(transfer_data));
+			ret = udsSendTo(UDS_BROADCAST_NETWORKNODEID, data_channel, UDS_SENDFLAG_Default, &transfer_data, sizeof(transfer_data));
 			if(R_FAILED(ret))
 			{
 				printf("udsSendTo() returned 0x%08x.\n", (unsigned int)ret);
@@ -266,7 +267,7 @@ void uds_test()
 			}
 		}
 
-		if(udsWaitDataAvailable(&bindctx, false, false))//Check whether data is available via udsPullPacket().
+		//if(udsWaitDataAvailable(&bindctx, false, false))//Check whether data is available via udsPullPacket().
 		{
 			memset(tmpbuf, 0, tmpbuf_size);
 			actual_size = 0;
