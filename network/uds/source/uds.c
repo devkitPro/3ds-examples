@@ -144,7 +144,6 @@ void uds_test()
 			if(R_FAILED(ret))
 			{
 				printf("udsConnectNetwork() returned 0x%08x.\n", (unsigned int)ret);
-				svcSleepThread(1000000000000ULL);//Sleep 1 second.
 			}
 			else
 			{
@@ -251,8 +250,9 @@ void uds_test()
 	{
 		gspWaitForVBlank();
 		hidScanInput();
+		u32 kDown = hidKeysDown();
 
-		if(hidKeysDown() & KEY_A)break;
+		if(kDown & KEY_A)break;
 		prev_transfer_data = transfer_data;
 		transfer_data = hidKeysHeld();
 
@@ -285,7 +285,7 @@ void uds_test()
 			}
 		}
 
-		if(hidKeysDown() & KEY_Y)
+		if(kDown & KEY_Y)
 		{
 			ret = udsGetNodeInformation(0x2, &tmpnode);//This can be used to get the NodeInfo for a node which just connected, for example.
 			if(R_FAILED(ret))
@@ -311,6 +311,18 @@ void uds_test()
 					printf("node word_x24=0x%x\n", (unsigned int)tmpnode.word_x24);
 				}
 			}
+		}
+
+		if(kDown & KEY_X)//Block new regular clients from connecting.
+		{
+			ret = udsSetNewConnectionsBlocked(true, true, false);
+			printf("udsSetNewConnectionsBlocked() for enabling blocking returned 0x%08x.\n", (unsigned int)ret);
+		}
+
+		if(kDown & KEY_B)//Unblock new regular clients from connecting.
+		{
+			ret = udsSetNewConnectionsBlocked(false, true, false);
+			printf("udsSetNewConnectionsBlocked() for disabling blocking returned 0x%08x.\n", (unsigned int)ret);
 		}
 
 		if(udsWaitConnectionStatusEvent(false, false))
