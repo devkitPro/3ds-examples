@@ -172,6 +172,7 @@ void uds_test()
 		if(R_FAILED(ret) || actual_size!=sizeof(out_appdata))
 		{
 			printf("udsGetApplicationData() returned 0x%08x. actual_size = 0x%x.\n", (unsigned int)ret, actual_size);
+			udsUnbind(&bindctx);
 			udsDisconnectNetwork();
 			return;
 		}
@@ -180,6 +181,7 @@ void uds_test()
 		if(memcmp(out_appdata, appdata, 4)!=0)
 		{
 			printf("The first 4-bytes of appdata is invalid.\n");
+			udsUnbind(&bindctx);
 			udsDisconnectNetwork();
 			return;
 		}
@@ -205,6 +207,8 @@ void uds_test()
 		if(R_FAILED(ret))
 		{
 			printf("udsSetApplicationData() returned 0x%08x.\n", (unsigned int)ret);
+			udsUnbind(&bindctx);
+			udsDestroyNetwork();
 			return;
 		}
 
@@ -213,6 +217,7 @@ void uds_test()
 		printf("udsGetChannel() returned 0x%08x. channel = %u.\n", (unsigned int)ret, (unsigned int)tmp);
 		if(R_FAILED(ret))
 		{
+			udsUnbind(&bindctx);
 			udsDestroyNetwork();
 			return;
 		}
@@ -236,10 +241,12 @@ void uds_test()
 
 		if(con_type)
 		{
+			udsUnbind(&bindctx);
 			udsDestroyNetwork();
 		}
 		else
 		{
+			udsUnbind(&bindctx);
 			udsDisconnectNetwork();
 		}
 
@@ -337,10 +344,12 @@ void uds_test()
 
 	if(con_type)
 	{
+		udsUnbind(&bindctx);
 		udsDestroyNetwork();
 	}
 	else
 	{
+		udsUnbind(&bindctx);
 		udsDisconnectNetwork();
 	}
 }
