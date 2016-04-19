@@ -48,8 +48,11 @@ void uds_test()
 	udsNetworkScanInfo *network = NULL;
 	size_t total_networks = 0;
 
+	u32 recv_buffer_size = UDS_DEFAULT_RECVBUFSIZE;
 	u32 wlancommID = 0x48425710;//Unique ID, change this to your own.
-	char *passphrase = "udsdemo passphrase c186093cd2652741";//Change this passphrase to your own.
+	char *passphrase = "udsdemo passphrase c186093cd2652741";//Change this passphrase to your own. The input you use for the passphrase doesn't matter since it's a raw buffer.
+
+	udsConnectionType conntype = UDSCONTYPE_Client;
 
 	u32 transfer_data, prev_transfer_data = 0;
 	size_t actual_size;
@@ -137,10 +140,20 @@ void uds_test()
 		strncpy(tmpstr, (char*)&out_appdata[4], sizeof(out_appdata)-5);
 		printf("String from network appdata: %s\n", (char*)&out_appdata[4]);
 
-		printf("Connecting to the network...\n");
+		hidScanInput();//Normally you would only connect as a regular client.
+		if(hidKeysHeld() & KEY_L)
+		{
+			conntype = UDSCONTYPE_Spectator;
+			printf("Connecting to the network as a spectator...\n");
+		}
+		else
+		{
+			printf("Connecting to the network as a client...\n");
+		}
+
 		for(pos=0; pos<10; pos++)
 		{
-			ret = udsConnectNetwork(&network->network, passphrase, strlen(passphrase)+1, &bindctx, UDS_BROADCAST_NETWORKNODEID, UDSCONTYPE_Client, data_channel);
+			ret = udsConnectNetwork(&network->network, passphrase, strlen(passphrase)+1, &bindctx, UDS_BROADCAST_NETWORKNODEID, conntype, data_channel, recv_buffer_size);
 			if(R_FAILED(ret))
 			{
 				printf("udsConnectNetwork() returned 0x%08x.\n", (unsigned int)ret);
@@ -172,8 +185,8 @@ void uds_test()
 		if(R_FAILED(ret) || actual_size!=sizeof(out_appdata))
 		{
 			printf("udsGetApplicationData() returned 0x%08x. actual_size = 0x%x.\n", (unsigned int)ret, actual_size);
-			udsUnbind(&bindctx);
 			udsDisconnectNetwork();
+			udsUnbind(&bindctx);
 			return;
 		}
 
@@ -181,8 +194,8 @@ void uds_test()
 		if(memcmp(out_appdata, appdata, 4)!=0)
 		{
 			printf("The first 4-bytes of appdata is invalid.\n");
-			udsUnbind(&bindctx);
 			udsDisconnectNetwork();
+			udsUnbind(&bindctx);
 			return;
 		}
 
@@ -196,7 +209,7 @@ void uds_test()
 		udsGenerateDefaultNetworkStruct(&networkstruct, wlancommID, 0, UDS_MAXNODES);
 
 		printf("Creating the network...\n");
-		ret = udsCreateNetwork(&networkstruct, passphrase, strlen(passphrase)+1, &bindctx, data_channel);//The input you use for the passphrase doesn't matter since it's a raw buffer.
+		ret = udsCreateNetwork(&networkstruct, passphrase, strlen(passphrase)+1, &bindctx, data_channel, recv_buffer_size);
 		if(R_FAILED(ret))
 		{
 			printf("udsCreateNetwork() returned 0x%08x.\n", (unsigned int)ret);
@@ -207,8 +220,8 @@ void uds_test()
 		if(R_FAILED(ret))
 		{
 			printf("udsSetApplicationData() returned 0x%08x.\n", (unsigned int)ret);
-			udsUnbind(&bindctx);
 			udsDestroyNetwork();
+			udsUnbind(&bindctx);
 			return;
 		}
 
@@ -217,8 +230,8 @@ void uds_test()
 		printf("udsGetChannel() returned 0x%08x. channel = %u.\n", (unsigned int)ret, (unsigned int)tmp);
 		if(R_FAILED(ret))
 		{
-			udsUnbind(&bindctx);
 			udsDestroyNetwork();
+			udsUnbind(&bindctx);
 			return;
 		}
 
@@ -233,7 +246,7 @@ void uds_test()
 
 	printf("Press A to stop data transfer.\n");
 
-	tmpbuf_size = 0x5C6;
+	tmpbuf_size = UDS_DATAFRAME_MAXSIZE;
 	tmpbuf = malloc(tmpbuf_size);
 	if(tmpbuf==NULL)
 	{
@@ -241,14 +254,13 @@ void uds_test()
 
 		if(con_type)
 		{
-			udsUnbind(&bindctx);
 			udsDestroyNetwork();
 		}
 		else
 		{
-			udsUnbind(&bindctx);
 			udsDisconnectNetwork();
 		}
+		udsUnbind(&bindctx);
 
 		return;
 	}
@@ -264,10 +276,10 @@ void uds_test()
 		transfer_data = hidKeysHeld();
 
 		//When the output from hidKeysHeld() changes, send it over the network.
-		if(transfer_data != prev_transfer_data)
+		if(transfer_data != prev_transfer_data && conntype!=UDSCONTYPE_Spectator)//Spectators aren't allowed to send data.
 		{
 			ret = udsSendTo(UDS_BROADCAST_NETWORKNODEID, data_channel, UDS_SENDFLAG_Default, &transfer_data, sizeof(transfer_data));
-			if(R_FAILED(ret))
+			if(R_FAILED(ret))//Certain udsSendTo() error(s) can be ignored without halting network communications, but there's nothing implemented in ctrulib for handling that currently.
 			{
 				printf("udsSendTo() returned 0x%08x.\n", (unsigned int)ret);
 				break;
@@ -332,6 +344,18 @@ void uds_test()
 			printf("udsSetNewConnectionsBlocked() for disabling blocking returned 0x%08x.\n", (unsigned int)ret);
 		}
 
+		if(kDown & KEY_R)
+		{
+			ret = udsEjectSpectator();
+			printf("udsEjectSpectator() returned 0x%08x.\n", (unsigned int)ret);
+		}
+
+		if(kDown & KEY_L)
+		{
+			ret = udsAllowSpectators();
+			printf("udsAllowSpectators() returned 0x%08x.\n", (unsigned int)ret);
+		}
+
 		if(udsWaitConnectionStatusEvent(false, false))
 		{
 			printf("Constatus event signaled.\n");
@@ -344,14 +368,13 @@ void uds_test()
 
 	if(con_type)
 	{
-		udsUnbind(&bindctx);
 		udsDestroyNetwork();
 	}
 	else
 	{
-		udsUnbind(&bindctx);
 		udsDisconnectNetwork();
 	}
+	udsUnbind(&bindctx);
 }
 
 int main()
@@ -363,7 +386,7 @@ int main()
 
 	printf("libctru UDS local-WLAN demo.\n");
 
-	ret = udsInit(0x100000, NULL);
+	ret = udsInit(0x3000, NULL);//The sharedmem size only needs to be slightly larger than the total recv_buffer_size for all binds, with page-alignment.
 	if(R_FAILED(ret))
 	{
 		printf("udsInit failed: 0x%08x.\n", (unsigned int)ret);
