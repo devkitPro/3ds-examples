@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 
 #include <3ds.h>
 
@@ -85,27 +84,17 @@ void mvd_video()
 
 	printf("Loading video...\n");
 
-	ret = romfsInit();//Normally you don't need to use romfsInit() outside of app-startup either.
-	if(R_FAILED(ret))
-	{
-		printf("romfsInit() failed: 0x%08x\n", (unsigned int)ret);
-		return;
-	}
-
 	//This loads the entire video into memory, normally you'd use a library to stream it.
 	f = fopen("romfs:/video.h264", "r");
 	if(f==NULL)
 	{
-		printf("Faile to open the video in romfs, errno=0x%08x.\n", errno);
-		romfsExit();
+		printf("Faile to open the video in romfs.\n");
 		return;
 	}
 
 	video = &inaddr[0x100000];
 	video_size = fread(video, 1, 0xF00000, f);
 	fclose(f);
-	ret = romfsExit();
-	printf("romfsExit(): 0x%08x\n", (unsigned int)ret);
 
 	if(video_size==0 || video_size>=0xF00000)
 	{
@@ -119,7 +108,10 @@ void mvd_video()
 
 	printf("Processing 0x%08x-byte video...\n", (unsigned int)video_size);
 
-	mvdstdGenerateDefaultConfig(&config, 400, 240, 400, 240, NULL, (u32*)outaddr, NULL);
+	mvdstdGenerateDefaultConfig(&config, 400, 240, 400, 240, NULL, (u32*)outaddr, NULL);//Normally you'd set the input dimensions here to dimensions loaded from the actual video.
+
+	config.output_width_override = 400;//Update these fields so that the total written output data is exactly the same as the input dimensions, without any alignment.
+	config.output_height_override = 240;
 
 	//Normally you'd use a library to load each NAL-unit, this example just parses the data manually.
 	while(video_pos < video_size+1)
@@ -171,17 +163,17 @@ void mvd_video()
 				if(hidKeysHeld() & KEY_B)break;
 
 				//Code for testing various config adjustments.
-				if(hidKeysDown() & KEY_DOWN)config.unk_x6c[(0x10c-0x6c)>>2]-= 0x10;
-				if(hidKeysDown() & KEY_UP)config.unk_x6c[(0x10c-0x6c)>>2]+= 0x10;
-				if(hidKeysDown() & KEY_LEFT)config.unk_x6c[(0x104-0x6c)>>2]-= 0x1;
-				if(hidKeysDown() & KEY_RIGHT)config.unk_x6c[(0x104-0x6c)>>2]+= 0x1;
+				//if(hidKeysDown() & KEY_DOWN)config.unk_x6c[(0x10c-0x6c)>>2]-= 0x10;
+				//if(hidKeysDown() & KEY_UP)config.unk_x6c[(0x10c-0x6c)>>2]+= 0x10;
+				if(hidKeysDown() & KEY_LEFT)config.unk_x08-= 0x1;
+				if(hidKeysDown() & KEY_RIGHT)config.unk_x08+= 0x1;
 
 				gfxtopadr = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
-				for(x=0; x<400; x++)//Copy the output image which has the width aligned to 512, to the framebuffer. This needs replaced with a GPU-related copy later since it's very slow.
+				for(x=0; x<400; x++)//Copy the output image to the framebuffer. This needs replaced with a GPU-related copy later since it's very slow.
 				{
 					for(y=0; y<240; y++)
 					{
-						pos = (y*512 + x) * 2;
+						pos = (y*400 + x) * 2;
 						pos2 = (x*240 + 239-y) * 2;
 
 						*((u16*)&gfxtopadr[pos2+0]) = *((u16*)&outaddr[pos+0]);
@@ -207,6 +199,8 @@ void mvd_video()
 
 int main()
 {
+	Result ret=0;
+
 	int draw=1;
 	int ready=0;
 	int type=0;
@@ -214,10 +208,24 @@ int main()
 	gfxInit(GSP_RGB565_OES,GSP_BGR8_OES,false);
 	consoleInit(GFX_BOTTOM, NULL);
 
-	inaddr = linearMemAlign(0x1000000, 0x40);
-	outaddr = linearMemAlign(0x100000, 0x40);
+	ret = romfsInit();
+	if(R_FAILED(ret))
+	{
+		printf("romfsInit() failed: 0x%08x\n", (unsigned int)ret);
+		ready = -1;
+	}
 
-	if(inaddr && outaddr)ready=1;
+	if(ready==0)
+	{
+		inaddr = linearMemAlign(0x1000000, 0x40);
+		outaddr = linearMemAlign(0x100000, 0x40);
+
+		if(!(inaddr && outaddr))
+		{
+			ready = -2;
+			printf("Failed to allocate memory.\n");
+		}
+	}
 
 	// Main loop
 	while (aptMainLoop())
@@ -230,15 +238,10 @@ int main()
 			consoleClear();
 			draw = 0;
 
-			printf("mvd example\n");
-
-			if(!ready)
-			{
-				printf("Failed to allocate memory.\n");
-			}
+			if(ready==0)printf("mvd example\n");
 
 			printf("Press START to exit.\n");
-			if(ready)
+			if(ready==0)
 			{
 				printf("Press A for color-format-conversion.\n");
 				printf("Press B for video(no sound).\n");
@@ -261,7 +264,7 @@ int main()
 		if (kDown & KEY_START)
 			break; // break in order to return to hbmenu
 
-		if(ready)
+		if(ready==0)
 		{
 			type = 0;
 			if (kDown & KEY_A)type = 1;
@@ -283,6 +286,8 @@ int main()
 
 	if(inaddr)linearFree(inaddr);
 	if(outaddr)linearFree(outaddr);
+
+	if(ready!=-1)romfsExit();
 
 	gfxExit();
 	return 0;
