@@ -69,9 +69,9 @@ void mvd_video()
 	u32 cur_nalunit_pos=0, prev_nalunit_pos=0;
 	u32 nalcount=0;
 	u8 *video;
-	u32 pos;
-	u32 x, y, pos2;
-	u32 tmpval;
+	//u32 pos;
+	//u32 x, y, pos2;
+	//u32 tmpval;
 
 	FILE *f = NULL;
 
@@ -108,7 +108,7 @@ void mvd_video()
 
 	printf("Processing 0x%08x-byte video...\n", (unsigned int)video_size);
 
-	mvdstdGenerateDefaultConfig(&config, 400, 240, 400, 240, NULL, (u32*)outaddr, NULL);//Normally you'd set the input dimensions here to dimensions loaded from the actual video.
+	mvdstdGenerateDefaultConfig(&config, 240, 400, 240, 400, NULL, (u32*)outaddr, NULL);//Normally you'd set the input dimensions here to dimensions loaded from the actual video.
 
 	//Normally you'd use a library to load each NAL-unit, this example just parses the data manually.
 	while(video_pos < video_size+1)
@@ -159,6 +159,9 @@ void mvd_video()
 
 			if(nalcount>=3)//Don't run this for parameter-sets.
 			{
+				gfxtopadr = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+				config.physaddr_outdata0 = osConvertVirtToPhys(gfxtopadr);
+
 				ret = mvdstdRenderVideoFrame(&config, true);
 				if(ret!=MVD_STATUS_OK)
 				{
@@ -166,7 +169,7 @@ void mvd_video()
 					break;
 				}
 
-				GSPGPU_InvalidateDataCache(outaddr, 400*240*2);
+				//GSPGPU_InvalidateDataCache(outaddr, 400*240*2);
 
 				hidScanInput();
 				if(hidKeysDown() & KEY_B)break;
@@ -222,7 +225,7 @@ void mvd_video()
 					}
 				}*/
 
-				gfxtopadr = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+				/*
 				for(x=0; x<400; x++)//Copy the output image to the framebuffer. This needs replaced with a GPU-related copy later since it's very slow.
 				{
 					for(y=0; y<240; y++)
@@ -237,7 +240,7 @@ void mvd_video()
 					}
 				}
 
-				gfxFlushBuffers();
+				gfxFlushBuffers();*/
 				gfxSwapBuffersGpu();
 			}
 		}
