@@ -124,13 +124,18 @@ void mvd_video()
 			{
 				prefix_offset = 0;
 			}
-			else
-			{*/
-				if(memcmp(&video[cur_nalunit_pos], prefix, 4))continue;
-			//}
+			else*/
+			{
+				if(memcmp(&video[cur_nalunit_pos], prefix, 4))
+				{
+					continue;
+				}
+				else
+				{
+					video_pos++;
+				}
+			}
 		}
-
-		video_pos+= 3+prefix_offset;
 
 		if(nalcount && prev_nalunit_pos!=cur_nalunit_pos)
 		{
@@ -164,20 +169,20 @@ void mvd_video()
 				GSPGPU_InvalidateDataCache(outaddr, 400*240*2);
 
 				hidScanInput();
-				if(hidKeysHeld() & KEY_B)break;
+				if(hidKeysDown() & KEY_B)break;
 
 				//Code for testing various config adjustments.
 				/*if(hidKeysDown() & KEY_DOWN)
 				{
-					config.unk_x104-= 0x1;
-					printf("0x%08x\n", (unsigned int)config.unk_x104);
+					config.unk_x04-= 0x1;
+					printf("0x%08x\n", (unsigned int)config.unk_x04);
 				}
 				if(hidKeysDown() & KEY_UP)
 				{
-					config.unk_x104+= 0x1;
-					printf("0x%08x\n", (unsigned int)config.unk_x104);
-				}*/
-				/*if(hidKeysDown() & KEY_LEFT)
+					config.unk_x04+= 0x1;
+					printf("0x%08x\n", (unsigned int)config.unk_x04);
+				}
+				if(hidKeysDown() & KEY_LEFT)
 				{
 					config.unk_x6c[12]-= 0x1;
 					printf("0x%08x\n", (unsigned int)config.unk_x6c[12]);
@@ -208,13 +213,12 @@ void mvd_video()
 					printf("0x%08x\n", (unsigned int)config.unk_x6c[14]);
 				}*/
 
-				/*if(hidKeysDown() & KEY_X)
+				/*if(hidKeysHeld() & KEY_X)
 				{
-					f = fopen("videodump.bin", "w");
+					if(f==NULL)f = fopen("videodump.bin", "w");
 					if(f)
 					{
-						fwrite(outaddr, 1, 400*240*4, f);
-						fclose(f);
+						fwrite(outaddr, 1, 400*240*2, f);
 					}
 				}*/
 
