@@ -110,9 +110,6 @@ void mvd_video()
 
 	mvdstdGenerateDefaultConfig(&config, 400, 240, 400, 240, NULL, (u32*)outaddr, NULL);//Normally you'd set the input dimensions here to dimensions loaded from the actual video.
 
-	config.output_width_override = 400;//Update these fields so that the total written output data is exactly the same as the input dimensions, without any alignment.
-	config.output_height_override = 240;
-
 	//Normally you'd use a library to load each NAL-unit, this example just parses the data manually.
 	while(video_pos < video_size+1)
 	{
@@ -172,15 +169,15 @@ void mvd_video()
 				//Code for testing various config adjustments.
 				/*if(hidKeysDown() & KEY_DOWN)
 				{
-					config.unk_x6c[(0x104-0x6c)>>2]-= 0x1;
-					printf("0x%08x\n", (unsigned int)config.unk_x6c[(0x104-0x6c)>>2]);
+					config.unk_x104-= 0x1;
+					printf("0x%08x\n", (unsigned int)config.unk_x104);
 				}
 				if(hidKeysDown() & KEY_UP)
 				{
-					config.unk_x6c[(0x104-0x6c)>>2]+= 0x1;
-					printf("0x%08x\n", (unsigned int)config.unk_x6c[(0x104-0x6c)>>2]);
-				}
-				if(hidKeysDown() & KEY_LEFT)
+					config.unk_x104+= 0x1;
+					printf("0x%08x\n", (unsigned int)config.unk_x104);
+				}*/
+				/*if(hidKeysDown() & KEY_LEFT)
 				{
 					config.unk_x6c[12]-= 0x1;
 					printf("0x%08x\n", (unsigned int)config.unk_x6c[12]);
