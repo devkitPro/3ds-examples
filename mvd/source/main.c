@@ -57,7 +57,7 @@ void mvd_colorconvert()
 	mvdstdExit();
 
 	gfxFlushBuffers();
-	gfxSwapBuffers();
+	gfxSwapBuffersGpu();
 	gspWaitForVBlank();
 }
 
@@ -69,9 +69,9 @@ void mvd_video()
 	u32 cur_nalunit_pos=0, prev_nalunit_pos=0;
 	u32 nalcount=0;
 	u8 *video;
-	bool parameter_set = true;
 	u32 pos;
 	u32 x, y, pos2;
+	u32 tmpval;
 
 	FILE *f = NULL;
 
@@ -148,25 +148,78 @@ void mvd_video()
 			GSPGPU_FlushDataCache(inaddr, nalunitsize);
 
 			//printf("Processing NAL-unit at offset 0x%08x size 0x%08x...\n", (unsigned int)prev_nalunit_pos, (unsigned int)nalunitsize);
-			ret = mvdstdProcessVideoFrame(&config, parameter_set, inaddr, nalunitsize);
+			ret = mvdstdProcessVideoFrame(inaddr, nalunitsize);
 			if(R_FAILED(ret))//Ignore MVD status-codes for now.
 			{
 				printf("mvdstdProcessVideoFrame() at NAL-unit offset 0x%08x returned: 0x%08x\n", (unsigned int)prev_nalunit_pos, (unsigned int)ret);
 				break;
 			}
 
-			if(!parameter_set)
+			if(nalcount>=3)//Don't run this for parameter-sets.
 			{
-				GSPGPU_InvalidateDataCache(outaddr, 0x46500);
+				ret = mvdstdRenderVideoFrame(&config, true);
+				if(ret!=MVD_STATUS_OK)
+				{
+					printf("mvdstdRenderVideoFrame() at NAL-unit offset 0x%08x returned: 0x%08x\n", (unsigned int)prev_nalunit_pos, (unsigned int)ret);
+					break;
+				}
+
+				GSPGPU_InvalidateDataCache(outaddr, 400*240*2);
 
 				hidScanInput();
 				if(hidKeysHeld() & KEY_B)break;
 
 				//Code for testing various config adjustments.
-				//if(hidKeysDown() & KEY_DOWN)config.unk_x6c[(0x10c-0x6c)>>2]-= 0x10;
-				//if(hidKeysDown() & KEY_UP)config.unk_x6c[(0x10c-0x6c)>>2]+= 0x10;
-				if(hidKeysDown() & KEY_LEFT)config.unk_x08-= 0x1;
-				if(hidKeysDown() & KEY_RIGHT)config.unk_x08+= 0x1;
+				/*if(hidKeysDown() & KEY_DOWN)
+				{
+					config.unk_x6c[(0x104-0x6c)>>2]-= 0x1;
+					printf("0x%08x\n", (unsigned int)config.unk_x6c[(0x104-0x6c)>>2]);
+				}
+				if(hidKeysDown() & KEY_UP)
+				{
+					config.unk_x6c[(0x104-0x6c)>>2]+= 0x1;
+					printf("0x%08x\n", (unsigned int)config.unk_x6c[(0x104-0x6c)>>2]);
+				}
+				if(hidKeysDown() & KEY_LEFT)
+				{
+					config.unk_x6c[12]-= 0x1;
+					printf("0x%08x\n", (unsigned int)config.unk_x6c[12]);
+				}
+				if(hidKeysDown() & KEY_RIGHT)
+				{
+					config.unk_x6c[12]+= 0x1;
+					printf("0x%08x\n", (unsigned int)config.unk_x6c[12]);
+				}
+				if(hidKeysDown() & KEY_L)
+				{
+					config.unk_x6c[13]-= 0x1;
+					printf("0x%08x\n", (unsigned int)config.unk_x6c[13]);
+				}
+				if(hidKeysDown() & KEY_R)
+				{
+					config.unk_x6c[13]+= 0x1;
+					printf("0x%08x\n", (unsigned int)config.unk_x6c[13]);
+				}
+				if(hidKeysDown() & KEY_ZL)
+				{
+					config.unk_x6c[14]-= 0x1;
+					printf("0x%08x\n", (unsigned int)config.unk_x6c[14]);
+				}
+				if(hidKeysDown() & KEY_ZR)
+				{
+					config.unk_x6c[14]+= 0x1;
+					printf("0x%08x\n", (unsigned int)config.unk_x6c[14]);
+				}*/
+
+				/*if(hidKeysDown() & KEY_X)
+				{
+					f = fopen("videodump.bin", "w");
+					if(f)
+					{
+						fwrite(outaddr, 1, 400*240*4, f);
+						fclose(f);
+					}
+				}*/
 
 				gfxtopadr = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
 				for(x=0; x<400; x++)//Copy the output image to the framebuffer. This needs replaced with a GPU-related copy later since it's very slow.
@@ -176,20 +229,19 @@ void mvd_video()
 						pos = (y*400 + x) * 2;
 						pos2 = (x*240 + 239-y) * 2;
 
-						*((u16*)&gfxtopadr[pos2+0]) = *((u16*)&outaddr[pos+0]);
+						tmpval = *((u16*)&outaddr[pos+0]);
+						//tmpval = (tmpval<<10) | ((tmpval>>10) & 0x1f) | (tmpval & 0x83e0);
+
+						*((u16*)&gfxtopadr[pos2+0]) = tmpval;
 					}
 				}
 
 				gfxFlushBuffers();
-				gfxSwapBuffers();
+				gfxSwapBuffersGpu();
 			}
 		}
 
 		nalcount++;
-		if(nalcount>=3 && parameter_set)
-		{
-			parameter_set = false;
-		}
 
 		prev_nalunit_pos = cur_nalunit_pos;
 	}
