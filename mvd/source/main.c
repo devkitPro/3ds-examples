@@ -34,7 +34,7 @@ void mvd_colorconvert()
 	GSPGPU_FlushDataCache(inaddr, 0x46500);
 	GSPGPU_FlushDataCache(gfxtopadr, 0x46500);
 
-	ret = mvdstdInit(MVDMODE_COLORFORMATCONV, MVD_INPUT_YUYV422, MVD_OUTPUT_BGR565, 0);
+	ret = mvdstdInit(MVDMODE_COLORFORMATCONV, MVD_INPUT_YUYV422, MVD_OUTPUT_BGR565, 0, NULL);
 	printf("mvdstdInit(): 0x%08x\n", (unsigned int)ret);
 
 	if(ret==0)
@@ -69,13 +69,12 @@ void mvd_video()
 	u32 cur_nalunit_pos=0, prev_nalunit_pos=0;
 	u32 nalcount=0;
 	u8 *video;
-	//u32 pos;
-	//u32 x, y, pos2;
-	//u32 tmpval;
+
+	u32 flagval=0;
 
 	FILE *f = NULL;
 
-	u8* gfxtopadr;
+	u8* gfxtopadr=NULL;
 
 	MVDSTD_Config config;
 
@@ -102,13 +101,13 @@ void mvd_video()
 		return;
 	}
 
-	ret = mvdstdInit(MVDMODE_VIDEOPROCESSING, MVD_INPUT_H264, MVD_OUTPUT_BGR565, 0x9006C8);//This size is what the New3DS Internet Browser uses(0x9006C8 from the MVDSTD:CalculateWorkBufSize output).
+	ret = mvdstdInit(MVDMODE_VIDEOPROCESSING, MVD_INPUT_H264, MVD_OUTPUT_BGR565, MVD_DEFAULT_WORKBUF_SIZE, NULL);
 	printf("mvdstdInit(): 0x%08x\n", (unsigned int)ret);
 	if(ret!=0)return;
 
 	printf("Processing 0x%08x-byte video...\n", (unsigned int)video_size);
 
-	mvdstdGenerateDefaultConfig(&config, 240, 400, 240, 400, NULL, (u32*)outaddr, NULL);//Normally you'd set the input dimensions here to dimensions loaded from the actual video.
+	mvdstdGenerateDefaultConfig(&config, 240, 400, 240, 400, NULL, (u32*)outaddr, (u32*)outaddr);//Normally you'd set the input dimensions here to dimensions loaded from the actual video.
 
 	//Normally you'd use a library to load each NAL-unit, this example just parses the data manually.
 	while(video_pos < video_size+1)
@@ -120,11 +119,15 @@ void mvd_video()
 
 		if(cur_nalunit_pos<video_size)
 		{
-			/*if(memcmp(&video[cur_nalunit_pos], &prefix[1], 3)==0)
+			/*if(nalcount==2 || nalcount==3)
 			{
-				prefix_offset = 0;
-			}
-			else*/
+				if(memcmp(&video[cur_nalunit_pos], &prefix[1], 3)==0)
+				{
+					prefix_offset = 0;
+				}
+			}*/
+			//if(prefix_offset)
+			//else
 			{
 				if(memcmp(&video[cur_nalunit_pos], prefix, 4))
 				{
@@ -149,18 +152,23 @@ void mvd_video()
 			memcpy(inaddr, &video[prev_nalunit_pos+prefix_offset], nalunitsize);
 			GSPGPU_FlushDataCache(inaddr, nalunitsize);
 
+			MVDSTD_ProcessNALUnitOut tmpout;//Normally you don't really need to use this.
+
 			//printf("Processing NAL-unit at offset 0x%08x size 0x%08x...\n", (unsigned int)prev_nalunit_pos, (unsigned int)nalunitsize);
-			ret = mvdstdProcessVideoFrame(inaddr, nalunitsize);
-			if(R_FAILED(ret))//Ignore MVD status-codes for now.
+			ret = mvdstdProcessVideoFrame(inaddr, nalunitsize, flagval, &tmpout);
+			if(!MVD_CHECKNALUPROC_SUCCESS(ret))
 			{
-				printf("mvdstdProcessVideoFrame() at NAL-unit offset 0x%08x returned: 0x%08x\n", (unsigned int)prev_nalunit_pos, (unsigned int)ret);
+				printf("mvdstdProcessVideoFrame() at NAL-unit offset 0x%08x size 0x%08x returned: 0x%08x. remaining_size=0x%08x.\n", (unsigned int)prev_nalunit_pos, (unsigned int)nalunitsize, (unsigned int)ret, (unsigned int)tmpout.remaining_size);
 				break;
 			}
 
-			if(nalcount>=3)//Don't run this for parameter-sets.
+			if(nalcount>=3)
 			{
 				gfxtopadr = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
 				config.physaddr_outdata0 = osConvertVirtToPhys(gfxtopadr);
+
+				//This sets the MVD output to the framebuffer directly. This is to avoid doing the video->framebuffer image rotation on the ARM11.
+				//Normally you'd use a seperate MVD output buffer, then transfer that to the framebuffer(such as with GPU rendering).
 
 				ret = mvdstdRenderVideoFrame(&config, true);
 				if(ret!=MVD_STATUS_OK)
@@ -169,78 +177,22 @@ void mvd_video()
 					break;
 				}
 
-				//GSPGPU_InvalidateDataCache(outaddr, 400*240*2);
-
 				hidScanInput();
 				if(hidKeysDown() & KEY_B)break;
 
-				//Code for testing various config adjustments.
-				/*if(hidKeysDown() & KEY_DOWN)
+				//Enable/disable the flag passed to mvdstdProcessVideoFrame().
+				if(hidKeysDown() & KEY_DOWN)
 				{
-					config.unk_x04-= 0x1;
-					printf("0x%08x\n", (unsigned int)config.unk_x04);
+					flagval-= 0x1;
+					printf("0x%08x\n", (unsigned int)flagval);
 				}
 				if(hidKeysDown() & KEY_UP)
 				{
-					config.unk_x04+= 0x1;
-					printf("0x%08x\n", (unsigned int)config.unk_x04);
-				}
-				if(hidKeysDown() & KEY_LEFT)
-				{
-					config.unk_x6c[12]-= 0x1;
-					printf("0x%08x\n", (unsigned int)config.unk_x6c[12]);
-				}
-				if(hidKeysDown() & KEY_RIGHT)
-				{
-					config.unk_x6c[12]+= 0x1;
-					printf("0x%08x\n", (unsigned int)config.unk_x6c[12]);
-				}
-				if(hidKeysDown() & KEY_L)
-				{
-					config.unk_x6c[13]-= 0x1;
-					printf("0x%08x\n", (unsigned int)config.unk_x6c[13]);
-				}
-				if(hidKeysDown() & KEY_R)
-				{
-					config.unk_x6c[13]+= 0x1;
-					printf("0x%08x\n", (unsigned int)config.unk_x6c[13]);
-				}
-				if(hidKeysDown() & KEY_ZL)
-				{
-					config.unk_x6c[14]-= 0x1;
-					printf("0x%08x\n", (unsigned int)config.unk_x6c[14]);
-				}
-				if(hidKeysDown() & KEY_ZR)
-				{
-					config.unk_x6c[14]+= 0x1;
-					printf("0x%08x\n", (unsigned int)config.unk_x6c[14]);
-				}*/
-
-				/*if(hidKeysHeld() & KEY_X)
-				{
-					if(f==NULL)f = fopen("videodump.bin", "w");
-					if(f)
-					{
-						fwrite(outaddr, 1, 400*240*2, f);
-					}
-				}*/
-
-				/*
-				for(x=0; x<400; x++)//Copy the output image to the framebuffer. This needs replaced with a GPU-related copy later since it's very slow.
-				{
-					for(y=0; y<240; y++)
-					{
-						pos = (y*400 + x) * 2;
-						pos2 = (x*240 + 239-y) * 2;
-
-						tmpval = *((u16*)&outaddr[pos+0]);
-						//tmpval = (tmpval<<10) | ((tmpval>>10) & 0x1f) | (tmpval & 0x83e0);
-
-						*((u16*)&gfxtopadr[pos2+0]) = tmpval;
-					}
+					flagval+= 0x1;
+					printf("0x%08x\n", (unsigned int)flagval);
 				}
 
-				gfxFlushBuffers();*/
+				//gspWaitForVBlank();//Can't use this under this example without a major slowdown. This is due to this example not doing any buffering for the frames.
 				gfxSwapBuffersGpu();
 			}
 		}
