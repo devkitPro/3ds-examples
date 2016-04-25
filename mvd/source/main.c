@@ -119,14 +119,14 @@ void mvd_video()
 
 		if(cur_nalunit_pos<video_size)
 		{
-			/*if(nalcount==2 || nalcount==3)
+			/*
 			{
-				if(memcmp(&video[cur_nalunit_pos], &prefix[1], 3)==0)
+				if(memcmp(&video[cur_nalunit_pos], &prefix[1], 3)==0 && cur_nalunit_pos==0x2dd)
 				{
 					prefix_offset = 0;
 				}
-			}*/
-			//if(prefix_offset)
+			}
+			if(prefix_offset)*/
 			//else
 			{
 				if(memcmp(&video[cur_nalunit_pos], prefix, 4))
@@ -162,7 +162,7 @@ void mvd_video()
 				break;
 			}
 
-			if(nalcount>=3)
+			if(ret!=MVD_STATUS_PARAMSET && ret!=MVD_STATUS_INCOMPLETEPROCESSING)
 			{
 				gfxtopadr = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
 				config.physaddr_outdata0 = osConvertVirtToPhys(gfxtopadr);
