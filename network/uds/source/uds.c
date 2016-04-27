@@ -279,7 +279,7 @@ void uds_test()
 		if(transfer_data != prev_transfer_data && conntype!=UDSCONTYPE_Spectator)//Spectators aren't allowed to send data.
 		{
 			ret = udsSendTo(UDS_BROADCAST_NETWORKNODEID, data_channel, UDS_SENDFLAG_Default, &transfer_data, sizeof(transfer_data));
-			if(R_FAILED(ret))//Certain udsSendTo() error(s) can be ignored without halting network communications, but there's nothing implemented in ctrulib for handling that currently.
+			if(UDS_CHECK_SENDTO_FATALERROR(ret))
 			{
 				printf("udsSendTo() returned 0x%08x.\n", (unsigned int)ret);
 				break;
