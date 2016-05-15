@@ -129,7 +129,18 @@ endif
 .PHONY: $(BUILD) clean all
 
 #---------------------------------------------------------------------------------
+ifeq (,$(wildcard $(ROMFS)/video.h264))
+
+all:
+	@echo "video.h264 not found!"
+	@echo
+	@echo "Please supply a video file to build this example"
+
+else
+
 all: $(BUILD)
+
+endif
 
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
