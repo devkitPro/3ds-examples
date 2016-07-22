@@ -1,0 +1,248 @@
+; Loop subdivision PICA200 geometry shader
+.gsh variable c48 3
+
+; Uniforms
+.fvec passes
+
+; Constants
+.constf myconst(1.0, 2.0, 3.0, 0.5)
+.alias  one   myconst.xxxx
+.alias  three myconst.zzzz
+.alias  half  myconst.wwww
+.constf even_masks_gt3(0.625,  0.375,  0.53125,    0.46875)    ; [5/8,  3/8,  17/32,   15/32]
+.constf even_masks_le3(0.4375, 0.1875, 0.40234375, 0.19921875) ; [7/16, 3/16, 103/256, 51/256]
+.constf odd_masks(0.375, 0.125, 0, 0) ; [3/8, 1/8]
+
+; Outputs
+.out outpos position
+.out outval dummy
+
+; Aliases (for convenience)
+.alias numVtx      c0
+.alias vtx0        c1
+.alias vtx1        c4
+.alias vtx2        c7
+.alias neighbors   c10
+.alias iter1Vtx    r10
+.alias iter2Vtx    r13
+
+.entry gmain
+.proc gmain
+	mov r0,    myconst.xyxx
+	add r0.xy, vtx0[2].x, r0
+	add r0.y,  vtx1[2].x, r0
+	mova a01, r0
+
+	mov r0.x, vtx0[2].x
+	mov r0.y, vtx1[2].x
+	mov r0.z, vtx2[2].x
+
+	mov r1, neighbors[   1]
+	mov r2, neighbors[a0+1]
+	mov r3, neighbors[a1+1]
+
+	slt r4, r0.w, r0
+	mad r1, r4.x, neighbors[   2], r1
+	mad r2, r4.y, neighbors[a0+2], r2
+	mad r3, r4.z, neighbors[a1+2], r3
+
+	add r0.w, one, r0
+	slt r4, r0.w, r0
+	mad r1, r4.x, neighbors[   3], r1
+	mad r2, r4.y, neighbors[a0+3], r2
+	mad r3, r4.z, neighbors[a1+3], r3
+
+	add r0.w, one, r0
+	slt r4, r0.w, r0
+	mad r1, r4.x, neighbors[   4], r1
+	mad r2, r4.y, neighbors[a0+4], r2
+	mad r3, r4.z, neighbors[a1+4], r3
+
+	add r0.w, one, r0
+	slt r4, r0.w, r0
+	mad r1, r4.x, neighbors[   5], r1
+	mad r2, r4.y, neighbors[a0+5], r2
+	mad r3, r4.z, neighbors[a1+5], r3
+
+	add r0.w, one, r0
+	slt r4, r0.w, r0
+	mad r1, r4.x, neighbors[   6], r1
+	mad r2, r4.y, neighbors[a0+6], r2
+	mad r3, r4.z, neighbors[a1+6], r3
+
+	add r0.w, one, r0
+	slt r4, r0.w, r0
+	mad r1, r4.x, neighbors[   7], r1
+	mad r2, r4.y, neighbors[a0+7], r2
+	mad r3, r4.z, neighbors[a1+7], r3
+
+	add r0.w, one, r0
+	slt r4, r0.w, r0
+	mad r1, r4.x, neighbors[   8], r1
+	mad r2, r4.y, neighbors[a0+8], r2
+	mad r3, r4.z, neighbors[a1+8], r3
+
+	add r0.w, one, r0
+	slt r4, r0.w, r0
+	mad r1, r4.x, neighbors[   9], r1
+	mad r2, r4.y, neighbors[a0+9], r2
+	mad r3, r4.z, neighbors[a1+9], r3
+
+	add r0.w, one, r0
+	slt r4, r0.w, r0
+	mad r1, r4.x, neighbors[   10], r1
+	mad r2, r4.y, neighbors[a0+10], r2
+	mad r3, r4.z, neighbors[a1+10], r3
+
+	add r0.w, one, r0
+	slt r4, r0.w, r0
+	mad r1, r4.x, neighbors[   11], r1
+	mad r2, r4.y, neighbors[a0+11], r2
+	mad r3, r4.z, neighbors[a1+11], r3
+
+	add r0.w, one, r0
+	slt r4, r0.w, r0
+	mad r1, r4.x, neighbors[   12], r1
+	mad r2, r4.y, neighbors[a0+12], r2
+	mad r3, r4.z, neighbors[a1+12], r3
+
+	; Calculate new positions for vtx0
+	cmp three, lt, lt, r0.xy
+	ifc cmp.x
+		rcp r0.x, r0.x
+		mov r4, even_masks_gt3
+		mul iter1Vtx[0], r0.x, r1
+	.else
+		mov r4, even_masks_le3
+		mov iter1Vtx[0], r1
+	.end
+	mul iter2Vtx[0], r4.w, iter1Vtx[0]
+	mul iter1Vtx[0], r4.y, iter1Vtx[0]
+	mad iter2Vtx[0], r4.z, vtx0[0], iter2Vtx[0]
+	mad iter1Vtx[0], r4.x, vtx0[0], iter1Vtx[0]
+
+	; Calculate new positions for vtx1
+	ifc cmp.y
+		rcp r0.y, r0.y
+		mov r4, even_masks_gt3
+		mul iter1Vtx[1], r0.y, r2
+	.else
+		mov r4, even_masks_le3
+		mov iter1Vtx[1], r2
+	.end
+	mul iter2Vtx[1], r4.w, iter1Vtx[1]
+	mul iter1Vtx[1], r4.y, iter1Vtx[1]
+	mad iter2Vtx[1], r4.z, vtx1[0], iter2Vtx[1]
+	mad iter1Vtx[1], r4.x, vtx1[0], iter1Vtx[1]
+
+	; Calculate new positions for vtx2
+	cmp three, lt, lt, r0.z
+	ifc cmp.x
+		rcp r0.z, r0.z
+		mov r4, even_masks_gt3
+		mul iter1Vtx[2], r0.z, r3
+	.else
+		mov r4, even_masks_le3
+		mov iter1Vtx[2], r3
+	.end
+	mul iter2Vtx[2], r4.w, iter1Vtx[2]
+	mul iter1Vtx[2], r4.y, iter1Vtx[2]
+	mad iter2Vtx[2], r4.z, vtx2[0], iter2Vtx[2]
+	mad iter1Vtx[2], r4.x, vtx2[0], iter1Vtx[2]
+
+	; Emit the vertices
+	mov r0.x, passes
+	cmp one, gt, lt, r0.xx
+	jmpc  cmp.x, calc_iter0
+	jmpc !cmp.y, calc_iter1
+
+calc_iter2:
+	mov outpos, iter2Vtx[1]
+	mov outval, vtx1[1]
+	setemit 0
+	emit
+
+	; This part is not implemented yet, sorry :(
+	; Basically this part would emit 16 triangles instead of just 4
+	; For the moment just fall through to the level 1 handler
+	nop
+	nop
+
+calc_iter1:
+	mov outpos, iter1Vtx[1]
+	mov outval, vtx1[1]
+	setemit 0
+	emit
+
+	mov r1, vtx1[0]
+	add r1, vtx2[0], r1
+	mul r1, odd_masks.x, r1
+	mov r2, vtx0[0]
+	add r2, neighbors[a0+1], r2
+	mad outpos, r2, odd_masks.y, r1
+	mov r2, vtx1[1]
+	add r2, vtx2[1], r2
+	mul outval, half, r2
+	setemit 1
+	emit
+
+	mov r8, vtx0[0]
+	add r8, vtx1[0], r8
+	mul r8, odd_masks.x, r8
+	mov r9, vtx2[0]
+	add r9, neighbors[1], r9
+	mad r8, r9, odd_masks.y, r8
+	mov r9, vtx0[1]
+	add r9, vtx1[1], r9
+	mul r9, half, r9
+	mov outpos, r8
+	mov outval, r9
+	setemit 2, prim
+	emit
+
+	mov r1, vtx2[0]
+	add r1, vtx0[0], r1
+	mul r1, odd_masks.x, r1
+	mov r2, vtx1[0]
+	add r2, neighbors[a1+1], r2
+	mad outpos, r2, odd_masks.y, r1
+	mov r2, vtx2[1]
+	add r2, vtx0[1], r2
+	mul outval, half, r2
+	setemit 0, prim inv
+	emit
+
+	mov outpos, iter1Vtx[2]
+	mov outval, vtx2[1]
+	setemit 2, prim
+	emit
+
+	mov outpos, r8
+	mov outval, r9
+	setemit 2
+	emit
+
+	mov outpos, iter1Vtx[0]
+	mov outval, vtx0[1]
+	setemit 1, prim
+	emit
+
+	end
+
+calc_iter0:
+	mov outpos, vtx0[0]
+	mov outval, vtx0[1]
+	setemit 0
+	emit
+
+	mov outpos, vtx1[0]
+	mov outval, vtx1[1]
+	setemit 1
+	emit
+
+	mov outpos, vtx2[0]
+	mov outval, vtx2[1]
+	setemit 2, prim
+	emit
+	end
+.end
