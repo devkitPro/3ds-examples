@@ -5,7 +5,7 @@
 
 #include <3ds.h>
 
-Result http_download(char *url)
+Result http_download(const char *url)
 {
 	Result ret=0;
 	httpcContext context;
@@ -34,36 +34,38 @@ Result http_download(char *url)
 		// gfxFlushBuffers();
 
 		// Set a User-Agent header so websites can identify your application
-		ret = httpcAddRequestHeaderField(&context, (char*)"User-Agent", (char*)"httpc-example/1.0.0");
+		ret = httpcAddRequestHeaderField(&context, "User-Agent", "httpc-example/1.0.0");
 		printf("return from httpcAddRequestHeaderField: %"PRId32"\n",ret);
 		gfxFlushBuffers();
 
 		// Tell the server we can support Keep-Alive connections.
 		// This will delay connection teardown momentarily (typically 5s)
 		// in case there is another request made to the same server.
-		ret = httpcAddRequestHeaderField(&context, (char*)"Connection", (char*)"Keep-Alive");
+		ret = httpcAddRequestHeaderField(&context, "Connection", "Keep-Alive");
 		printf("return from httpcAddRequestHeaderField: %"PRId32"\n",ret);
 		gfxFlushBuffers();
 
 		ret = httpcBeginRequest(&context);
 		if(ret!=0){
 			httpcCloseContext(&context);
+			if(newurl!=NULL) free(newurl);
 			return ret;
 		}
 
 		ret = httpcGetResponseStatusCode(&context, &statuscode, 0);
 		if(ret!=0){
 			httpcCloseContext(&context);
+			if(newurl!=NULL) free(newurl);
 			return ret;
 		}
 
 		if ((statuscode >= 301 && statuscode <= 303) || (statuscode >= 307 && statuscode <= 308)) {
-			newurl = malloc(0x1000); // One 4K page for new URL
+			if(newurl==NULL) newurl = malloc(0x1000); // One 4K page for new URL
 			if (newurl==NULL){
 				httpcCloseContext(&context);
 				return -1;
 			}
-			ret = httpcGetResponseHeader(&context, (char*)"Location", newurl, 0x1000);
+			ret = httpcGetResponseHeader(&context, "Location", newurl, 0x1000);
 			url = newurl; // Change pointer to the url that we just learned
 			printf("redirecting to url: %s\n",url);
 			httpcCloseContext(&context); // Close this context before we try the next
