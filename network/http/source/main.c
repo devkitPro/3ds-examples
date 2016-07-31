@@ -52,7 +52,7 @@ Result http_download(const char *url)
 			return ret;
 		}
 
-		ret = httpcGetResponseStatusCode(&context, &statuscode, 0);
+		ret = httpcGetResponseStatusCode(&context, &statuscode);
 		if(ret!=0){
 			httpcCloseContext(&context);
 			if(newurl!=NULL) free(newurl);
