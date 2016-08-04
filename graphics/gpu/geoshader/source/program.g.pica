@@ -1,4 +1,5 @@
 ; Example PICA200 geometry shader
+.gsh point c0
 
 ; Uniforms
 .fvec projection[4]
@@ -18,7 +19,6 @@
 ; v2-v3: position/color of the second vertex
 ; v4-v5: position/color of the third vertex
 
-.gsh
 .entry gmain
 .proc gmain
 	; Calculate the midpoints of the vertices

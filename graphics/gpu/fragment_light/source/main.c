@@ -156,7 +156,7 @@ static void sceneRender(float iod)
 	// Calculate the modelView matrix
 	C3D_Mtx modelView;
 	Mtx_Identity(&modelView);
-	Mtx_Translate(&modelView, 0.0, 0.0, -4.0 + sinf(angleX));
+	Mtx_Translate(&modelView, 0.0, 0.0, -4.0 + sinf(angleX), true);
 	Mtx_RotateX(&modelView, angleX, true);
 	Mtx_RotateY(&modelView, angleY, true);
 
