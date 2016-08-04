@@ -121,7 +121,7 @@ static void sceneInit(void)
 	AttrInfo_AddLoader(attrInfo, 2, GPU_FLOAT, 3); // v2=normal
 
 	// Compute the projection matrix
-	Mtx_PerspTilt(&projection, 80.0f*M_PI/180.0f, 400.0f/240.0f, 0.01f, 1000.0f);
+	Mtx_PerspTilt(&projection, 80.0f*M_PI/180.0f, 400.0f/240.0f, 0.01f, 1000.0f, false);
 
 	// Create the VBO (vertex buffer object)
 	vbo_data = linearAlloc(sizeof(vertex_list));

@@ -49,7 +49,7 @@ static void sceneInit(void)
 	C3D_FixedAttribSet(1, 1.0, 1.0, 1.0, 1.0);
 
 	// Compute the projection matrix
-	Mtx_OrthoTilt(&projection, 0.0, 400.0, 0.0, 240.0, 0.0, 1.0);
+	Mtx_OrthoTilt(&projection, 0.0, 400.0, 0.0, 240.0, 0.0, 1.0, true);
 
 	// Create the VBO (vertex buffer object)
 	vbo_data = linearAlloc(sizeof(vertex_list));

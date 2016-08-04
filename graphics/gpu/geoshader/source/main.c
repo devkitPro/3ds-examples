@@ -48,7 +48,7 @@ static void sceneInit(void)
 	AttrInfo_AddLoader(attrInfo, 1, GPU_FLOAT, 4); // v1=color
 
 	// Compute the projection matrix
-	Mtx_OrthoTilt(&projection, 0.0, 400.0, 0.0, 240.0, 0.0, 1.0);
+	Mtx_OrthoTilt(&projection, 0.0, 400.0, 0.0, 240.0, 0.0, 1.0, true);
 
 	// Create the VBO (vertex buffer object)
 	vbo_data = linearAlloc(sizeof(vertex_list));

@@ -151,7 +151,7 @@ static void sceneInit(void)
 static void sceneRender(float iod)
 {
 	// Compute the projection matrix
-	Mtx_PerspStereoTilt(&projection, 40.0f*M_PI/180.0f, 400.0f/240.0f, 0.01f, 1000.0f, iod, 2.0f);
+	Mtx_PerspStereoTilt(&projection, 40.0f*M_PI/180.0f, 400.0f/240.0f, 0.01f, 1000.0f, iod, 2.0f, false);
 
 	// Calculate the modelView matrix
 	C3D_Mtx modelView;

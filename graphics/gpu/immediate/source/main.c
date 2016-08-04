@@ -34,7 +34,7 @@ static void sceneInit(void)
 	AttrInfo_AddLoader(attrInfo, 1, GPU_FLOAT, 3); // v1=color
 
 	// Compute the projection matrix
-	Mtx_OrthoTilt(&projection, 0.0, 400.0, 0.0, 240.0, 0.0, 1.0);
+	Mtx_OrthoTilt(&projection, 0.0, 400.0, 0.0, 240.0, 0.0, 1.0, true);
 
 	// Configure the first fragment shading substage to just pass through the vertex color
 	// See https://www.opengl.org/sdk/docs/man2/xhtml/glTexEnv.xml for more insight

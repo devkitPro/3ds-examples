@@ -117,7 +117,7 @@ static void sceneInit(void) {
 
 	// Compute the projection matrix
 	// Note: we're setting top to 240 here so origin is at top left.
-	Mtx_OrthoTilt(&projection, 0.0, 400.0, 240.0, 0.0, 0.0, 1.0);
+	Mtx_OrthoTilt(&projection, 0.0, 400.0, 240.0, 0.0, 0.0, 1.0, true);
 
 	// Configure buffers
 	C3D_BufInfo* bufInfo = C3D_GetBufInfo();
