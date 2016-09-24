@@ -42,7 +42,7 @@ static void sceneInit(void)
 	AttrInfo_AddLoader(attrInfo, 1, GPU_FLOAT, 2); // v1=texcoord
 
 	// Compute the projection matrix
-	Mtx_OrthoTilt(&projection, 0.0, 400.0, 240.0, 0.0, 0.0, 1.0);
+	Mtx_OrthoTilt(&projection, 0.0, 400.0, 240.0, 0.0, 0.0, 1.0, true);
 
 	// Configure depth test to overwrite pixels with the same depth (needed to draw overlapping glyphs)
 	C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
