@@ -1,15 +1,19 @@
 #include <string.h>
+#include <stdio.h>
 
 #include <3ds.h>
 
-int main()
-{
+int main(int argc, char **argv) {
+
 	gfxInitDefault();
-	//gfxSet3D(true); // uncomment if using stereoscopic 3D
+	consoleInit(GFX_TOP, NULL);
+
+	printf("Hello 3DS World!");
+
 
 	// Main loop
-	while (aptMainLoop())
-	{
+	while (aptMainLoop()) {
+
 		gspWaitForVBlank();
 		hidScanInput();
 
@@ -18,14 +22,6 @@ int main()
 		u32 kDown = hidKeysDown();
 		if (kDown & KEY_START)
 			break; // break in order to return to hbmenu
-
-		// Example rendering code that displays a white pixel
-		// Please note that the 3DS screens are sideways (thus 240x400 and 240x320)
-		u8* fb = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
-		memset(fb, 0, 240*400*3);
-		fb[3*(10+10*240)] = 0xFF;
-		fb[3*(10+10*240)+1] = 0xFF;
-		fb[3*(10+10*240)+2] = 0xFF;
 
 		// Flush and swap framebuffers
 		gfxFlushBuffers();
