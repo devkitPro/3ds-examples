@@ -125,18 +125,21 @@ endif
 .PHONY: $(BUILD) clean all
 
 #---------------------------------------------------------------------------------
-ifeq ($(strip $(IMAGEMAGICK)),)
+ifneq ($(strip $(IMAGEMAGICK)),)
+ifeq ($(findstring System32, $(IMAGEMAGICK)),)
+
+all: $(BUILD)
+
+else
 
 all:
 	@echo "Image Magick not found!"
 	@echo
 	@echo "Please install Image Magick from http://www.imagemagick.org/ to build this example"
 
-else
-
-all: $(BUILD)
-
 endif
+endif
+
 
 #---------------------------------------------------------------------------------
 $(BUILD):
