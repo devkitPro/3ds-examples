@@ -38,8 +38,8 @@
 
 //simple sprite struct
 typedef struct {
-	int x,y;			// screen co-ordinates
-	int dx, dy;			// velocity
+	float x,y;			// screen co-ordinates
+	float dx, dy;			// velocity
 	int image;
 }Sprite;
 
@@ -164,10 +164,10 @@ static void sceneInit(void) {
 
 	for(i = 0; i < NUM_SPRITES; i++) {
 		//random place and speed
-		sprites[i].x = (rand() % (400 - 32 )) << 8;
-		sprites[i].y = (rand() % (240 - 32 )) << 8 ;
-		sprites[i].dx = (rand() & 0xFF) + 0x100;
-		sprites[i].dy = (rand() & 0xFF) + 0x100;
+		sprites[i].x = rand() % (400 - 32);
+		sprites[i].y = rand() % (240 - 32);
+		sprites[i].dx = 1.0f + 1.0f / (rand() % 256);
+		sprites[i].dy = 1.0f + 1.0f / (rand() % 256);
 		sprites[i].image = rand() & 3;
 
 		if(rand() & 1)
@@ -191,10 +191,10 @@ static void moveSprites() {
 		sprites[i].y += sprites[i].dy;
 
 		//check for collision with the screen boundaries
-		if(sprites[i].x < (1<<8) || sprites[i].x > ((400-32) << 8))
+		if(sprites[i].x < 1 || sprites[i].x > (400-32))
 			sprites[i].dx = -sprites[i].dx;
 
-		if(sprites[i].y < (1<<8) || sprites[i].y > ((240-32) << 8))
+		if(sprites[i].y < 1 || sprites[i].y > (240-32))
 			sprites[i].dy = -sprites[i].dy;
 	}
 }
@@ -208,7 +208,7 @@ static void sceneRender(void) {
 
 	for(i = 0; i < NUM_SPRITES; i++) {
 
-		drawSprite( sprites[i].x >> 8, sprites[i].y >> 8, 32, 32, sprites[i].image);
+		drawSprite( sprites[i].x, sprites[i].y, 32, 32, sprites[i].image);
 	}
 
 }
