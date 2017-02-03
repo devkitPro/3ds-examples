@@ -38,7 +38,7 @@
 
 //simple sprite struct
 typedef struct {
-	int x,y;			// screen co-ordinates 
+	int x,y;			// screen co-ordinates
 	int dx, dy;			// velocity
 	int image;
 }Sprite;
@@ -62,28 +62,19 @@ void drawSprite( int x, int y, int width, int height, int image ) {
 	float bottom = images[image].bottom;
 
 	// Draw a textured quad directly
-	C3D_ImmDrawBegin(GPU_TRIANGLES);
-		C3D_ImmSendAttrib(x, y, 0.5f, 0.0f); // v0=position
-		C3D_ImmSendAttrib( left, top, 0.0f, 0.0f);
-
-		C3D_ImmSendAttrib(x+width, y+height, 0.5f, 0.0f);
-		C3D_ImmSendAttrib( right, bottom, 0.0f, 0.0f);
-
-		C3D_ImmSendAttrib(x+width, y, 0.5f, 0.0f);
-		C3D_ImmSendAttrib( right, top, 0.0f, 0.0f);
-
+	C3D_ImmDrawBegin(GPU_TRIANGLE_STRIP);
 		C3D_ImmSendAttrib(x, y, 0.5f, 0.0f); // v0=position
 		C3D_ImmSendAttrib( left, top, 0.0f, 0.0f);
 
 		C3D_ImmSendAttrib(x, y+height, 0.5f, 0.0f);
 		C3D_ImmSendAttrib( left, bottom, 0.0f, 0.0f);
 
+		C3D_ImmSendAttrib(x+width, y, 0.5f, 0.0f);
+		C3D_ImmSendAttrib( right, top, 0.0f, 0.0f);
+
 		C3D_ImmSendAttrib(x+width, y+height, 0.5f, 0.0f);
 		C3D_ImmSendAttrib( right, bottom, 0.0f, 0.0f);
-
-
 	C3D_ImmDrawEnd();
-
 }
 
 
@@ -198,7 +189,7 @@ static void moveSprites() {
 	for(i = 0; i < NUM_SPRITES; i++) {
 		sprites[i].x += sprites[i].dx;
 		sprites[i].y += sprites[i].dy;
-			
+
 		//check for collision with the screen boundaries
 		if(sprites[i].x < (1<<8) || sprites[i].x > ((400-32) << 8))
 			sprites[i].dx = -sprites[i].dx;
