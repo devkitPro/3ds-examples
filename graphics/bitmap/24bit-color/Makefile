@@ -131,9 +131,16 @@ endif
 
 #---------------------------------------------------------------------------------
 ifneq ($(strip $(IMAGEMAGICK)),)
-ifeq ($(findstring System32, $(IMAGEMAGICK)),)
+ifeq ($(findstring System32,$(IMAGEMAGICK)),)
 
-all: $(BUILD)
+HAVE_CONVERT	:=	yes
+
+endif
+endif
+
+ifeq ($(strip $(HAVE_CONVERT)),yes)
+
+all:	$(BUILD)
 
 else
 
@@ -143,8 +150,6 @@ all:
 	@echo "Please install Image Magick from http://www.imagemagick.org/ to build this example"
 
 endif
-endif
-
 
 #---------------------------------------------------------------------------------
 $(BUILD):
