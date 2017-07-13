@@ -1,0 +1,203 @@
+; Particle geometry shader
+.gsh particle c24 c0 4
+
+; Uniforms
+.fvec param, randParam, randSeed, uvCoords[2]
+.bool multiplyW, randSphere, noRespawn
+
+; Description of uniforms:
+; param:      X=number of particles; Y=time; Z=speed scale; W=speed bias
+; randParam:  PRNG parameters: (a, b, m, 1/m) -- x[n+1] = (a*x[n] + b) mod m
+; randSeed:   PRNG initialization (four values at once)
+; uvCoords:   Texture coordinates (4 vec2 packed as 2 vec4)
+; multiplyW:  Enables or disables the perspective divide countermeasure
+; randSphere: Specifies whether to reject random vectors outside unit sphere
+; noRespawn:  Specifies whether particles shouldn't respawn
+
+; Constants
+.constf myconst(0.0, 1.0, 3.0, 0.5)
+.alias  zeros myconst.x
+.alias  ones  myconst.y
+
+; Outputs
+.out oPosition position
+.out oColor    color
+.out oTexCoord texcoord0
+
+; Aliases for the input data (stored at the beginning of fvec uniform space)
+.alias cp0_pos  c0
+.alias cp0_attr c1
+.alias cp0_mtx  c2
+.alias cp1_pos  c6
+.alias cp1_attr c7
+.alias cp1_mtx  c8
+.alias cp2_pos  c12
+.alias cp2_attr c13
+.alias cp2_mtx  c14
+.alias cp3_pos  c18
+.alias cp3_attr c19
+.alias cp3_mtx  c20
+
+.entry particle_gsh_main
+.proc particle_gsh_main
+	; r14 = PRNG state (initialized to randSeed)
+	mov r14, randSeed
+	; r15 = (t, 1-t, UND, loopcnt)
+	mov r15.w, param.x
+loop_head:
+	; Decrement loopcnt (number of particles)
+	add r15.w, -ones, r15
+
+prng_retry:
+	; Advance PRNG: r14 = (r14*randParam.x + randParam.y) mod randParam.z
+	; This is implemented using the equation mod(a,b) = a - b*floor(a/b)
+	mov r2, randParam.y
+	mad r2, r14, randParam.x, r2
+	mul r3, randParam.w, r2
+	flr r3, r3
+	mad r14, -r3, randParam.z, r2
+
+	; Normalize random vector to [0,1)
+	mul r2, randParam.w, r14
+	max r2, zeros, r2 ; safety...
+	min r2, ones,  r2 ; safety...
+
+	; Transform xyz into the range [-1,1)
+	add r2.xyz, r2, r2
+	add r2.xyz, -ones, r2
+
+	; Reject vectors outside the unit sphere (i.e. accept if |v| <= 1)
+	; In case the vector is rejected, the PRNG is rolled again
+	ifu randSphere
+		dp3 r3, r2, r2
+		cmp ones, ge, ge, r3
+	.else
+		cmp r2, eq, eq, r2 ; this should always be true
+	.end
+	jmpc !cmp.x, prng_retry
+
+	; Calculate Bezier parameter (t), which should be [0,1]:
+	; t = time * (speedScale*r2.w + speedBias)
+	; Values of t which fall outside [0,1] are treated as follows:
+	; noRespawn=true  --> particle is discarded
+	; noRespawn=false --> t wraps around, i.e. t = fract(t)
+	mov r15.x, param.w
+	mad r15.x, r2.w, param.z, r15
+	mul r15.x, param.y, r15
+	ifu noRespawn
+		cmp myconst.xy, gt, lt, r15.x
+	.else
+		flr r15.z, r15.x
+		add r15.x, -r15.z, r15
+		cmp r15, ne, ne, r15
+	.end
+	jmpc cmp.x || cmp.y, loop_tail
+	add r15.y, ones, -r15.x ; (calculate 1-t)
+
+	; Calculate 4 random control points to be used with Bezier:
+	; r10..r13 = cpN_pos + cpN_mtx*r2
+	dp3 r10.x, cp0_mtx[0], r2
+	dp3 r10.y, cp0_mtx[1], r2
+	dp3 r10.z, cp0_mtx[2], r2
+	dp3 r10.w, cp0_mtx[3], r2
+	dp3 r11.x, cp1_mtx[0], r2
+	dp3 r11.y, cp1_mtx[1], r2
+	dp3 r11.z, cp1_mtx[2], r2
+	dp3 r11.w, cp1_mtx[3], r2
+	dp3 r12.x, cp2_mtx[0], r2
+	dp3 r12.y, cp2_mtx[1], r2
+	dp3 r12.z, cp2_mtx[2], r2
+	dp3 r12.w, cp2_mtx[3], r2
+	dp3 r13.x, cp3_mtx[0], r2
+	dp3 r13.y, cp3_mtx[1], r2
+	dp3 r13.z, cp3_mtx[2], r2
+	dp3 r13.w, cp3_mtx[3], r2
+	add r10,   cp0_pos,    r10
+	add r11,   cp1_pos,    r11
+	add r12,   cp2_pos,    r12
+	add r13,   cp3_pos,    r13
+
+	; Calculate final particle position:
+	; r0 = cubic_bezier(r10..r13, t)
+	mul r2, r10, r15.y
+	mul r3, r11, r15.x
+	mul r4, r11, r15.y
+	mul r5, r12, r15.x
+	add r2, r3, r2
+	mul r3, r12, r15.y
+	add r4, r5, r4
+	mul r5, r13, r15.x
+	mul r2, r2, r15.y
+	mul r6, r4, r15.x
+	add r3, r3, r5
+	mul r4, r4, r15.y
+	add r2, r2, r6
+	mul r3, r3, r15.x
+	add r3, r3, r4
+	mul r2, r2, r15.y
+	mul r3, r3, r15.x
+	add r0, r2, r3
+
+	; Likewise, interpolate the attributes:
+	; r1 = cubic_bezier(cpN_attr, t)
+	mul r2, cp0_attr, r15.y
+	mul r3, cp1_attr, r15.x
+	mul r4, cp1_attr, r15.y
+	mul r5, cp2_attr, r15.x
+	add r2, r3, r2
+	mul r3, cp2_attr, r15.y
+	add r4, r5, r4
+	mul r5, cp3_attr, r15.x
+	mul r2, r2, r15.y
+	mul r6, r4, r15.x
+	add r3, r3, r5
+	mul r4, r4, r15.y
+	add r2, r2, r6
+	mul r3, r3, r15.x
+	add r3, r3, r4
+	mul r2, r2, r15.y
+	mul r3, r3, r15.x
+	add r1, r2, r3
+
+	; Multiply particle width/height by W to cancel out perspective divide
+	ifu multiplyW
+		mul r1.xy, r0.w, r1
+	.end
+	; r2 = (-r1.x, r1.y)  (helper value for below)
+	mov r2,    r1
+	mov r2.x,  -r2
+
+	; Emit bottom-left vertex of particle
+	setemit 0
+	add oPosition, r0, -r1.xyz
+	mov oColor, r1.w
+	mov oTexCoord, uvCoords[0].xy
+	emit
+
+	; Emit bottom-right vertex of particle
+	setemit 1
+	add oPosition, r0, -r2.xyz
+	mov oColor, r1.w
+	mov oTexCoord, uvCoords[0].zw
+	emit
+
+	; Emit top-left vertex of particle
+	setemit 2, prim
+	add oPosition, r0, r2.xyz
+	mov oColor, r1.w
+	mov oTexCoord, uvCoords[1].xy
+	emit
+
+	; Emit top-right vertex of particle
+	setemit 0, inv prim
+	add oPosition, r0, r1.xyz
+	mov oColor, r1.w
+	mov oTexCoord, uvCoords[1].zw
+	emit
+
+loop_tail:
+	; Loop if there are remaining particles to emit
+	cmp zeros, lt, lt, r15.w
+	jmpc cmp.x, loop_head
+	end
+.end

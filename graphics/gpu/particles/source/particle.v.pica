@@ -1,0 +1,71 @@
+; Particle vertex shader
+
+; Uniforms
+.fvec projection[4], modelView[4]
+
+; Constants
+.constf myconst(0.0, 1.0, 3.0, 0.5)
+.alias  zeros myconst.x
+.alias  ones  myconst.y
+
+; Outputs
+.out oCenter  dummy
+.out oAttrib  dummy
+.out oMatrix0 dummy
+.out oMatrix1 dummy
+.out oMatrix2 dummy
+.out oMatrix3 dummy
+
+; Inputs
+.in iCenter v0
+.in iRadius v1
+.in iAttrib v2
+
+.entry particle_vsh_main
+.proc particle_vsh_main
+	mov r0, iCenter
+	mov r0.w, ones
+
+	; r1 = modelView * vec4(iCenter, 1.0)
+	dp4 r1.x, modelView[0], r0
+	dp4 r1.y, modelView[1], r0
+	dp4 r1.z, modelView[2], r0
+	dp4 r1.w, modelView[3], r0
+
+	; oCenter = projection * r1
+	dp4 oCenter.x, projection[0], r1
+	dp4 oCenter.y, projection[1], r1
+	dp4 oCenter.z, projection[2], r1
+	dp4 oCenter.w, projection[3], r1
+
+	; oAttrib = iAttrib
+	mov oAttrib, iAttrib
+
+	; oMatrix = projection * modelView * diagonal4x3(iRadius)
+	mul r2.x, modelView[0].x, iRadius.x
+	mul r2.y, modelView[1].x, iRadius.x
+	mul r2.z, modelView[2].x, iRadius.x
+	mul r3.x, modelView[0].y, iRadius.y
+	mul r3.y, modelView[1].y, iRadius.y
+	mul r3.z, modelView[2].y, iRadius.y
+	mul r4.x, modelView[0].z, iRadius.z
+	mul r4.y, modelView[1].z, iRadius.z
+	mul r4.z, modelView[2].z, iRadius.z
+	dp3 oMatrix0.x, projection[0], r2
+	dp3 oMatrix0.y, projection[0], r3
+	dp3 oMatrix0.z, projection[0], r4
+	mov oMatrix0.w, zeros
+	dp3 oMatrix1.x, projection[1], r2
+	dp3 oMatrix1.y, projection[1], r3
+	dp3 oMatrix1.z, projection[1], r4
+	mov oMatrix1.w, zeros
+	dp3 oMatrix2.x, projection[2], r2
+	dp3 oMatrix2.y, projection[2], r3
+	dp3 oMatrix2.z, projection[2], r4
+	mov oMatrix2.w, zeros
+	dp3 oMatrix3.x, projection[3], r2
+	dp3 oMatrix3.y, projection[3], r3
+	dp3 oMatrix3.z, projection[3], r4
+	mov oMatrix3.w, zeros
+	end
+.end
