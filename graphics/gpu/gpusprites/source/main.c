@@ -10,6 +10,7 @@
 #include <citro3d.h>
 
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -34,7 +35,8 @@
 	GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGBA8) | \
 	GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
 
-#define NUM_SPRITES 256
+#define MAX_SPRITES   1600
+#define MAX_IMMEDIATE 500
 
 //simple sprite struct
 typedef struct {
@@ -43,7 +45,7 @@ typedef struct {
 	int image;
 }Sprite;
 
-Sprite sprites[NUM_SPRITES];
+static Sprite sprites[MAX_SPRITES];
 
 struct { float left, right, top, bottom; } images[4] = {
 	{0.0f, 0.5f, 0.0f, 0.5f},
@@ -52,14 +54,25 @@ struct { float left, right, top, bottom; } images[4] = {
 	{0.5f, 1.0f, 0.5f, 1.0f},
 };
 
+//VBO entry
+typedef struct {
+	float x, y, z;
+	float u, v;
+}VBOEntry;
+
+static VBOEntry *vbo;
+
 //---------------------------------------------------------------------------------
-void drawSprite( int x, int y, int width, int height, int image ) {
+static void drawSpriteImmediate( size_t idx, int x, int y, int width, int height, int image ) {
 //---------------------------------------------------------------------------------
 
 	float left = images[image].left;
 	float right = images[image].right;
 	float top = images[image].top;
 	float bottom = images[image].bottom;
+
+	if (idx > MAX_IMMEDIATE)
+		return;
 
 	// Draw a textured quad directly
 	C3D_ImmDrawBegin(GPU_TRIANGLE_STRIP);
@@ -77,11 +90,32 @@ void drawSprite( int x, int y, int width, int height, int image ) {
 	C3D_ImmDrawEnd();
 }
 
+//---------------------------------------------------------------------------------
+static void drawSpriteVBO( size_t idx, int x, int y, int width, int height, int image ) {
+//---------------------------------------------------------------------------------
+	float left = images[image].left;
+	float right = images[image].right;
+	float top = images[image].top;
+	float bottom = images[image].bottom;
+
+	VBOEntry *entry = &vbo[idx*6];
+
+	*entry++ = (VBOEntry){ x,       y,        0.5f, left,  top    };
+	*entry++ = (VBOEntry){ x,       y+height, 0.5f, left,  bottom };
+	*entry++ = (VBOEntry){ x+width, y,        0.5f, right, top    };
+
+	*entry++ = (VBOEntry){ x+width, y,        0.5f, right, top    };
+	*entry++ = (VBOEntry){ x,       y+height, 0.5f, left,  bottom };
+	*entry++ = (VBOEntry){ x+width, y+height, 0.5f, right, bottom };
+}
 
 static DVLB_s* vshader_dvlb;
 static shaderProgram_s program;
 static int uLoc_projection;
 static C3D_Mtx projection;
+
+static size_t numSprites = 256;
+void (*drawSprite)(size_t,int,int,int,int,int) = drawSpriteImmediate;
 
 static C3D_Tex spritesheet_tex;
 
@@ -99,6 +133,9 @@ static void sceneInit(void) {
 	// Get the location of the uniforms
 	uLoc_projection = shaderInstanceGetUniformLocation(program.vertexShader, "projection");
 
+	// Allocate VBO
+	vbo = (VBOEntry*)linearAlloc(sizeof(VBOEntry) * 6 * MAX_SPRITES);
+
 	// Configure attributes for use with the vertex shader
 	// Attribute format and element count are ignored in immediate mode
 	C3D_AttrInfo* attrInfo = C3D_GetAttrInfo();
@@ -113,6 +150,7 @@ static void sceneInit(void) {
 	// Configure buffers
 	C3D_BufInfo* bufInfo = C3D_GetBufInfo();
 	BufInfo_Init(bufInfo);
+	BufInfo_Add(bufInfo, vbo, sizeof(VBOEntry), 2, 0x10);
 
 	unsigned char* image;
 	unsigned width, height;
@@ -162,19 +200,19 @@ static void sceneInit(void) {
 
 	srand(time(NULL));
 
-	for(i = 0; i < NUM_SPRITES; i++) {
+	for(i = 0; i < MAX_SPRITES; i++) {
 		//random place and speed
 		sprites[i].x = rand() % (400 - 32);
 		sprites[i].y = rand() % (240 - 32);
-		sprites[i].dx = 1.0f + 1.0f / (rand() % 256);
-		sprites[i].dy = 1.0f + 1.0f / (rand() % 256);
+		sprites[i].dx = rand()*4.0f/RAND_MAX - 2.0f;
+		sprites[i].dy = rand()*4.0f/RAND_MAX - 2.0f;
 		sprites[i].image = rand() & 3;
 
-		if(rand() & 1)
+/*		if(rand() & 2)
 			sprites[i].dx = -sprites[i].dx;
 		if(rand() & 1)
 			sprites[i].dy = -sprites[i].dy;
-	}
+*/	}
 
 	// Configure depth test to overwrite pixels with the same depth (needed to draw overlapping sprites)
 	C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
@@ -186,7 +224,7 @@ static void moveSprites() {
 
 	int i;
 
-	for(i = 0; i < NUM_SPRITES; i++) {
+	for(i = 0; i < numSprites; i++) {
 		sprites[i].x += sprites[i].dx;
 		sprites[i].y += sprites[i].dy;
 
@@ -202,14 +240,18 @@ static void moveSprites() {
 //---------------------------------------------------------------------------------
 static void sceneRender(void) {
 //---------------------------------------------------------------------------------
-	int i;
+	size_t i;
+
 	// Update the uniforms
 	C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_projection, &projection);
 
-	for(i = 0; i < NUM_SPRITES; i++) {
+	for (i = 0; i < numSprites; i++) {
 
-		drawSprite( sprites[i].x, sprites[i].y, 32, 32, sprites[i].image);
+		drawSprite( i, sprites[i].x, sprites[i].y, 32, 32, sprites[i].image);
 	}
+
+	if (drawSprite == drawSpriteVBO)
+		C3D_DrawArrays(GPU_TRIANGLES, 0, numSprites * 6);
 
 }
 
@@ -220,6 +262,9 @@ static void sceneExit(void) {
 	// Free the shader program
 	shaderProgramFree(&program);
 	DVLB_Free(vshader_dvlb);
+
+	// Free the vbo
+	linearFree(vbo);
 }
 
 //---------------------------------------------------------------------------------
@@ -228,6 +273,7 @@ int main(int argc, char **argv) {
 	// Initialize graphics
 	gfxInitDefault();
 	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
+	consoleInit(GFX_BOTTOM, NULL);
 
 	// Initialize the render target
 	C3D_RenderTarget* target = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
@@ -236,6 +282,10 @@ int main(int argc, char **argv) {
 
 	// Initialize the scene
 	sceneInit();
+
+	printf("\x1b[7;1HPress Y to switch mode");
+	printf("\x1b[8;1HPress Up to increment sprites");
+	printf("\x1b[9;1HPress Down to decrement sprites");
 
 	// Main loop
 	while (aptMainLoop()) {
@@ -247,7 +297,40 @@ int main(int argc, char **argv) {
 		if (kDown & KEY_START)
 			break; // break in order to return to hbmenu
 
+		u32 kHeld = hidKeysHeld();
+		if ((kHeld & KEY_UP) && numSprites < MAX_SPRITES)
+			++numSprites;
+		if ((kHeld & KEY_DOWN) && numSprites > 1)
+			--numSprites;
+
+		if (kDown & KEY_Y)
+		{
+			if (drawSprite == drawSpriteImmediate)
+				drawSprite = drawSpriteVBO;
+			else
+				drawSprite = drawSpriteImmediate;
+		}
+
 		moveSprites();
+
+
+		if (drawSprite == drawSpriteImmediate)
+		{
+			printf("\x1b[2;1HMode:    Immediate\x1b[K");
+			printf("\x1b[1;1HSprites: %zu/%u\x1b[K",
+				numSprites < MAX_IMMEDIATE ? numSprites : MAX_IMMEDIATE,
+				MAX_IMMEDIATE);
+		}
+		else
+		{
+			printf("\x1b[1;0HSprites: %zu/%u\x1b[K",
+				numSprites, MAX_SPRITES);
+			printf("\x1b[2;0HMode:    VBO\x1b[K");
+		}
+
+		printf("\x1b[3;1HCPU:     %6.2f%%\x1b[K", C3D_GetProcessingTime()*6.0f);
+		printf("\x1b[4;1HGPU:     %6.2f%%\x1b[K", C3D_GetDrawingTime()*6.0f);
+		printf("\x1b[5;1HCmdBuf:  %6.2f%%\x1b[K", C3D_GetCmdBufUsage()*100.0f);
 
 		// Render the scene
 		C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
