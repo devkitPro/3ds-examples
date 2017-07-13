@@ -1,0 +1,209 @@
+#include <3ds.h>
+#include <citro3d.h>
+#include <string.h>
+#include "vshader_shbin.h"
+#include "teapot.h"
+
+#define CLEAR_COLOR 0x68B0D8FF
+
+#define DISPLAY_TRANSFER_FLAGS \
+	(GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) | GX_TRANSFER_RAW_COPY(0) | \
+	GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB8) | \
+	GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
+
+static DVLB_s* vshader_dvlb;
+static shaderProgram_s program;
+static int uLoc_projection, uLoc_modelView;
+static C3D_Mtx projection;
+
+static C3D_LightEnv lightEnv;
+static C3D_Light light;
+static C3D_LightLut lut_Spec, lut_Toon;
+
+static void* vbo_data;
+#ifdef vertex_element_count
+static void* ibo_data;
+#endif
+static float angleX = 0.0, angleY = 0.0;
+
+#define NUM_DIFFUSE_TONES 3
+static float toon_diffuse(float x, float arg)
+{
+	const float factor = NUM_DIFFUSE_TONES-1;
+	return floorf(0.5f+x*factor)/factor;
+}
+
+#define NUM_SPECULAR_TONES 2
+static float toon_specular(float x, float shininess)
+{
+	const float factor = NUM_SPECULAR_TONES-1;
+	return floorf(0.5f+powf(x, shininess)*factor)/factor;
+}
+
+static void sceneInit(void)
+{
+	// Load the vertex shader, create a shader program and bind it
+	vshader_dvlb = DVLB_ParseFile((u32*)vshader_shbin, vshader_shbin_size);
+	shaderProgramInit(&program);
+	shaderProgramSetVsh(&program, &vshader_dvlb->DVLE[0]);
+	C3D_BindProgram(&program);
+
+	// Get the location of the uniforms
+	uLoc_projection   = shaderInstanceGetUniformLocation(program.vertexShader, "projection");
+	uLoc_modelView    = shaderInstanceGetUniformLocation(program.vertexShader, "modelView");
+
+	// Configure attributes for use with the vertex shader
+	C3D_AttrInfo* attrInfo = C3D_GetAttrInfo();
+	AttrInfo_Init(attrInfo);
+	AttrInfo_AddLoader(attrInfo, 0, GPU_FLOAT, 3); // v0=position
+	AttrInfo_AddLoader(attrInfo, 1, GPU_FLOAT, 3); // v1=normal
+
+	// Create the VBO (vertex buffer object)
+	vbo_data = linearAlloc(sizeof(vertex_array));
+	memcpy(vbo_data, vertex_array, sizeof(vertex_array));
+#ifdef vertex_element_count
+	ibo_data = linearAlloc(sizeof(vertex_elements));
+	memcpy(ibo_data, vertex_elements, sizeof(vertex_elements));
+#endif
+
+	// Configure buffers
+	C3D_BufInfo* bufInfo = C3D_GetBufInfo();
+	BufInfo_Init(bufInfo);
+	BufInfo_Add(bufInfo, vbo_data, sizeof(float[6]), 2, 0x10);
+
+	// Configure the first fragment shading substage to blend the fragment primary color
+	// with the fragment secondary color.
+	// See https://www.opengl.org/sdk/docs/man2/xhtml/glTexEnv.xml for more insight
+	C3D_TexEnv* env = C3D_GetTexEnv(0);
+	C3D_TexEnvSrc(env, C3D_RGB, GPU_FRAGMENT_PRIMARY_COLOR, GPU_FRAGMENT_SECONDARY_COLOR, 0);
+	C3D_TexEnvSrc(env, C3D_Alpha, GPU_PRIMARY_COLOR, 0, 0);
+	C3D_TexEnvFunc(env, C3D_RGB, GPU_ADD);
+	C3D_TexEnvFunc(env, C3D_Alpha, GPU_REPLACE);
+
+	static const C3D_Material material =
+	{
+		{ 0.2f, 0.2f, 0.2f }, //ambient
+		{ 0.0f, 0.0f, 0.0f }, //diffuse
+		{ 0.4f, 0.4f, 0.4f }, //specular0
+		{ 0.4f, 0.4f, 0.4f }, //specular1
+		{ 0.0f, 0.0f, 0.0f }, //emission
+	};
+
+	C3D_LightEnvInit(&lightEnv);
+	C3D_LightEnvBind(&lightEnv);
+	C3D_LightEnvMaterial(&lightEnv, &material);
+
+	LightLut_FromFunc(&lut_Toon, toon_diffuse, 0.0f, false);
+	LightLut_FromFunc(&lut_Spec, toon_specular, 30.0f, false);
+	C3D_LightEnvLut(&lightEnv, GPU_LUT_D0, GPU_LUTINPUT_NH, false, &lut_Spec);
+	C3D_LightEnvLut(&lightEnv, GPU_LUT_D1, GPU_LUTINPUT_LN, false, &lut_Toon);
+
+	C3D_LightInit(&light, &lightEnv);
+}
+
+static void sceneRender(float iod)
+{
+	// Compute the projection matrix
+	Mtx_PerspStereoTilt(&projection, C3D_AngleFromDegrees(40.0f), C3D_AspectRatioTop, 0.01f, 1000.0f, iod, 3.0f, false);
+
+	C3D_FVec objPos   = FVec4_New(0.0f, 0.0f, -3.0f, 1.0f);
+	C3D_FVec lightPos = FVec4_New(0.0f, 0.0f, -0.5f, 1.0f);
+
+	// Calculate the modelView matrix
+	C3D_Mtx modelView;
+	Mtx_Identity(&modelView);
+	Mtx_Translate(&modelView, objPos.x, objPos.y, objPos.z, true);
+	Mtx_RotateX(&modelView, C3D_Angle(sinf(angleX)/4), true);
+	Mtx_RotateY(&modelView, C3D_Angle(angleY), true);
+	Mtx_Translate(&modelView, 0.0f, -0.5f, 0.f, true);
+
+	C3D_LightPosition(&light, &lightPos);
+
+	// Update the uniforms
+	C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_projection, &projection);
+	C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_modelView,  &modelView);
+
+	// Draw the VBO
+#ifdef vertex_element_count
+	C3D_DrawElements(GPU_TRIANGLES, vertex_element_count, C3D_UNSIGNED_SHORT, ibo_data);
+#else
+	C3D_DrawArrays(GPU_TRIANGLES, 0, vertex_array_count);
+#endif
+}
+
+static void sceneExit(void)
+{
+	// Free the VBO
+	linearFree(vbo_data);
+#ifdef vertex_element_count
+	linearFree(ibo_data);
+#endif
+
+	// Free the shader program
+	shaderProgramFree(&program);
+	DVLB_Free(vshader_dvlb);
+}
+
+int main()
+{
+	// Initialize graphics
+	gfxInitDefault();
+	gfxSet3D(true); // Enable stereoscopic 3D
+	consoleInit(GFX_BOTTOM, NULL);
+	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
+
+	// Initialize the render targets
+	C3D_RenderTarget* targetLeft  = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+	C3D_RenderTarget* targetRight = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+	C3D_RenderTargetSetClear(targetLeft,   C3D_CLEAR_ALL, CLEAR_COLOR, 0);
+	C3D_RenderTargetSetClear(targetRight,  C3D_CLEAR_ALL, CLEAR_COLOR, 0);
+	C3D_RenderTargetSetOutput(targetLeft,  GFX_TOP, GFX_LEFT,  DISPLAY_TRANSFER_FLAGS);
+	C3D_RenderTargetSetOutput(targetRight, GFX_TOP, GFX_RIGHT, DISPLAY_TRANSFER_FLAGS);
+
+	// Initialize the scene
+	sceneInit();
+
+	// Main loop
+	while (aptMainLoop())
+	{
+		hidScanInput();
+
+		// Respond to user input
+		u32 kDown = hidKeysDown();
+		u32 kHeld = hidKeysHeld();
+		if (kDown & KEY_START)
+			break; // break in order to return to hbmenu
+
+		float slider = osGet3DSliderState();
+		float iod = slider/2;
+
+		// Rotate the model
+		if (!(kHeld & KEY_A))
+		{
+			angleX += 1.0f/64;
+			angleY += 1.0f/256;
+		}
+
+		// Render the scene
+		C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+		{
+			C3D_FrameDrawOn(targetLeft);
+			sceneRender(-iod);
+
+			if (iod > 0.0f)
+			{
+				C3D_FrameDrawOn(targetRight);
+				sceneRender(iod);
+			}
+		}
+		C3D_FrameEnd(0);
+	}
+
+	// Deinitialize the scene
+	sceneExit();
+
+	// Deinitialize graphics
+	C3D_Fini();
+	gfxExit();
+	return 0;
+}
