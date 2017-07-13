@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 		gspWaitForVBlank();
 		hidScanInput();
 
-		printf("\x1b[5;0H");
+		printf("\x1b[6;1H");
 		printf("thread counter = %d\n",threadcount);
 
 		u32 kDown = hidKeysDown();

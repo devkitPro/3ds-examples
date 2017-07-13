@@ -18,9 +18,9 @@ int main(int argc, char **argv)
 	//the row and column where you want your cursor to move
 	//The top screen has 30 rows and 50 columns
 	//The bottom screen has 30 rows and 40 columns
-	printf("\x1b[15;19HHello World!");
+	printf("\x1b[16;20HHello World!");
 
-	printf("\x1b[29;15HPress Start to exit.");
+	printf("\x1b[30;16HPress Start to exit.");
 
 	// Main loop
 	while (aptMainLoop())

@@ -1,39 +1,35 @@
-/*
-	RTC example made by Aurelio Mannara for libctru
-*/
-
 #include <3ds.h>
 #include <stdio.h>
 #include <time.h>
 
+const char* const months[12] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
 
-const char* months[12] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
-
-const char* weekDays[7] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
-
+const char* const weekDays[7] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
 const u16 daysAtStartOfMonthLUT[12] =
 {
-	0	%7, //januari		31
-	31	%7, //februari		28+1(leap year)
-	59	%7, //maart			31
-	90	%7, //april			30
-	120	%7, //mei			31
-	151	%7, //juni			30
-	181	%7, //juli			31
-	212	%7, //augustus		31
-	243	%7, //september		30
-	273	%7, //oktober		31
-	304	%7, //november		30
-	334	%7  //december		31
+	0   % 7, //january    31
+	31  % 7, //february   28+1(leap year)
+	59  % 7, //march      31
+	90  % 7, //april      30
+	120 % 7, //may        31
+	151 % 7, //june       30
+	181 % 7, //july       31
+	212 % 7, //august     31
+	243 % 7, //september  30
+	273 % 7, //october    31
+	304 % 7, //november   30
+	334 % 7  //december   31
 };
 
-#define isLeapYear(year) (((year)%4) == 0)
+static inline bool isLeapYear(int year)
+{
+	return (year%4) == 0 && !((year%100) == 0 && (year%400) != 0);
+}
 
-uint getDayOfWeek(uint day, uint month, uint year)
+static inline int getDayOfWeek(int day, int month, int year)
 {
 	//http://en.wikipedia.org/wiki/Calculating_the_day_of_the_week
-
 	day += 2*(3-((year/100)%4));
 	year %= 100;
 	day += year + (year/4);
@@ -49,7 +45,7 @@ int main(int argc, char **argv)
 	//Initialize console on top screen. Using NULL as the second argument tells the console library to use the internal console structure as current one
 	consoleInit(GFX_TOP, NULL);
 
-	printf("\x1b[29;15HPress Start to exit.");
+	printf("\x1b[30;16HPress Start to exit.");
 
 	// Main loop
 	while (aptMainLoop())
@@ -73,7 +69,7 @@ int main(int argc, char **argv)
 		int month = timeStruct->tm_mon;
 		int year = timeStruct->tm_year +1900;
 
-		printf("\x1b[0;0H%02i:%02i:%02i", hours, minutes, seconds);
+		printf("\x1b[1;1H%02i:%02i:%02i", hours, minutes, seconds);
 		printf("\n%s %s %i %i", weekDays[getDayOfWeek(day, month, year)], months[month], day, year);
 
 		// Flush and swap framebuffers

@@ -20,10 +20,10 @@ int main(int argc, char **argv)
 	//the row and column where you want your cursor to move
 	//The top screen has 30 rows and 50 columns
 	//The bottom screen has 30 rows and 40 columns
-	printf("\x1b[15;19HHello World!");
+	printf("\x1b[16;20HHello World!");
 
 	//Move the cursor to the top left corner of the screen
-	printf("\x1b[0;0H");
+	printf("\x1b[1;1H");
 
 	//Print a REALLY crappy poeam with colored text
 	//\x1b[cm set a SGR (Select Graphic Rendition) parameter, where c is the parameter that you want to set
@@ -32,8 +32,8 @@ int main(int argc, char **argv)
 	//Reset (0), Half bright colors (2), Reverse (7), Text color (30-37) and Background color (40-47)
 	printf("Roses are \x1b[31mred\x1b[0m\n");
 	printf("Violets are \x1b[34mblue\x1b[0m\n");
-	printf("Piracy is bad\n");
-	printf("While homebrews are good\n\n");
+	printf("Lenny is our savior\n");
+	printf("Homebrew is his blessing\n\n");
 
 	//Black text on white background
 	//In this example we set two parameter in a single escape sequence by separating them by a semicolon
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 	printf("\x1b[47;30mBlack text on white background\x1b[0m");
 
 
-	printf("\x1b[29;15HPress Start to exit.");
+	printf("\x1b[30;16HPress Start to exit.");
 	// Main loop
 	while (aptMainLoop())
 	{

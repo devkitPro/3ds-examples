@@ -61,6 +61,8 @@ static void sceneInit(void)
 		tex->height = glyphInfo->sheetHeight;
 		tex->param = GPU_TEXTURE_MAG_FILTER(GPU_LINEAR) | GPU_TEXTURE_MIN_FILTER(GPU_LINEAR)
 			| GPU_TEXTURE_WRAP_S(GPU_CLAMP_TO_EDGE) | GPU_TEXTURE_WRAP_T(GPU_CLAMP_TO_EDGE);
+		tex->border = 0;
+		tex->lodParam = 0;
 	}
 
 	// Create the text vertex array

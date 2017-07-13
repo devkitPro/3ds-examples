@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 	printf("This is the bottom screen. We don't have much space...\nStill better than DS screens :D");
 
 	consoleSelect(&topScreen);
-	printf("\x1b[29;15HPress Start to exit.");
+	printf("\x1b[30;16HPress Start to exit.");
 
 	// Main loop
 	while (aptMainLoop())

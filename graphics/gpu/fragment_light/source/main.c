@@ -141,7 +141,7 @@ static void sceneInit(void)
 	LightLut_Phong(&lut_Phong, 30);
 	C3D_LightEnvLut(&lightEnv, GPU_LUT_D0, GPU_LUTINPUT_LN, false, &lut_Phong);
 
-	C3D_FVec lightVec = { { 1.0, -0.5, 0.0, 0.0 } };
+	C3D_FVec lightVec = FVec4_New(0.0f, 0.0f, -0.5f, 1.0f);
 
 	C3D_LightInit(&light, &lightEnv);
 	C3D_LightColor(&light, 1.0, 1.0, 1.0);
@@ -151,7 +151,7 @@ static void sceneInit(void)
 static void sceneRender(float iod)
 {
 	// Compute the projection matrix
-	Mtx_PerspStereoTilt(&projection, 40.0f*M_PI/180.0f, 400.0f/240.0f, 0.01f, 1000.0f, iod, 2.0f, false);
+	Mtx_PerspStereoTilt(&projection, C3D_AngleFromDegrees(40.0f), C3D_AspectRatioTop, 0.01f, 1000.0f, iod, 2.0f, false);
 
 	// Calculate the modelView matrix
 	C3D_Mtx modelView;

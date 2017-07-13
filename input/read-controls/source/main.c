@@ -38,8 +38,8 @@ int main(int argc, char **argv)
 
 	u32 kDownOld = 0, kHeldOld = 0, kUpOld = 0; //In these variables there will be information about keys detected in the previous frame
 
-	printf("\x1b[0;0HPress Start to exit.");
-	printf("\x1b[1;0HCirclePad position:");
+	printf("\x1b[1;1HPress Start to exit.");
+	printf("\x1b[2;1HCirclePad position:");
 
 	// Main loop
 	while (aptMainLoop())
@@ -63,10 +63,10 @@ int main(int argc, char **argv)
 			consoleClear();
 
 			//These two lines must be rewritten because we cleared the whole console
-			printf("\x1b[0;0HPress Start to exit.");
-			printf("\x1b[1;0HCirclePad position:");
+			printf("\x1b[1;1HPress Start to exit.");
+			printf("\x1b[2;1HCirclePad position:");
 
-			printf("\x1b[3;0H"); //Move the cursor to the fourth row because on the third one we'll write the circle pad position
+			printf("\x1b[4;1H"); //Move the cursor to the fourth row because on the third one we'll write the circle pad position
 
 			//Check if some of the keys are down, held or up
 			int i;
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
 		hidCircleRead(&pos);
 
 		//Print the CirclePad position
-		printf("\x1b[2;0H%04d; %04d", pos.dx, pos.dy);
+		printf("\x1b[3;1H%04d; %04d", pos.dx, pos.dy);
 
 		// Flush and swap framebuffers
 		gfxFlushBuffers();

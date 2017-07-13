@@ -100,8 +100,8 @@ int main(int argc, char **argv) {
 
 	printf("Press up/down to change tone frequency\n");
 	printf("Press left/right to change filter\n");
-	printf("\x1b[5;0Hnote = %i Hz        ", notefreq[note]);
-	printf("\x1b[6;0Hfilter = %s         ", filter_names[filter]);
+	printf("\x1b[6;1Hnote = %i Hz        ", notefreq[note]);
+	printf("\x1b[7;1Hfilter = %s         ", filter_names[filter]);
 
 	while(aptMainLoop()) {
 
@@ -120,13 +120,13 @@ int main(int argc, char **argv) {
 			if (note < 0) {
 				note = ARRAY_SIZE(notefreq) - 1;
 			}
-			printf("\x1b[5;0Hnote = %i Hz        ", notefreq[note]);
+			printf("\x1b[6;1Hnote = %i Hz        ", notefreq[note]);
 		} else if (kDown & KEY_UP) {
 			note++;
 			if (note >= ARRAY_SIZE(notefreq)) {
 				note = 0;
 			}
-			printf("\x1b[5;0Hnote = %i Hz        ", notefreq[note]);
+			printf("\x1b[6;1Hnote = %i Hz        ", notefreq[note]);
 		}
 
 		bool update_params = false;
@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
 		}
 
 		if (update_params) {
-			printf("\x1b[6;0Hfilter = %s         ", filter_names[filter]);
+			printf("\x1b[7;1Hfilter = %s         ", filter_names[filter]);
 			switch (filter) {
 			default:
 				ndspChnIirBiquadSetEnable(0, false);

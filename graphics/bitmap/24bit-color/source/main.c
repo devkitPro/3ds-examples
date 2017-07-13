@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 
 	printf("Why so sad Smealum? We can haz 3DS homebrew!");
 
-	printf("\x1b[20;15HPress Start to exit.");
+	printf("\x1b[21;16HPress Start to exit.");
 
 	//We don't need double buffering in this example. In this way we can draw our image only once on screen.
 	gfxSetDoubleBuffering(GFX_BOTTOM, false);
