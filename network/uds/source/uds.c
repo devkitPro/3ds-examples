@@ -67,7 +67,7 @@ void uds_test()
 
 	char tmpstr[256];
 
-	strncpy((char*)&appdata[4], "Test appdata.", sizeof(appdata)-1);
+	strncpy((char*)&appdata[4], "Test appdata.", sizeof(appdata)-4);
 
 	printf("Successfully initialized.\n");
 
