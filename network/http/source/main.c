@@ -25,10 +25,9 @@ Result http_download(const char *url)
 		ret = httpcSetSSLOpt(&context, SSLCOPT_DisableVerify);
 		printf("return from httpcSetSSLOpt: %"PRId32"\n",ret);
 
-		// Enable Keep-Alive connections (on by default, pending ctrulib merge)
-		// ret = httpcSetKeepAlive(&context, HTTPC_KEEPALIVE_ENABLED);
-		// printf("return from httpcSetKeepAlive: %"PRId32"\n",ret);
-		// gfxFlushBuffers();
+		// Enable Keep-Alive connections
+		ret = httpcSetKeepAlive(&context, HTTPC_KEEPALIVE_ENABLED);
+		printf("return from httpcSetKeepAlive: %"PRId32"\n",ret);
 
 		// Set a User-Agent header so websites can identify your application
 		ret = httpcAddRequestHeaderField(&context, "User-Agent", "httpc-example/1.0.0");
