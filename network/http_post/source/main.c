@@ -28,20 +28,14 @@ Result http_post(const char* url, const char* data)
 		gfxFlushBuffers();
 
 		// Enable Keep-Alive connections (on by default, pending ctrulib merge)
-		// ret = httpcSetKeepAlive(&context, HTTPC_KEEPALIVE_ENABLED);
-		// printf("return from httpcSetKeepAlive: %"PRIx32"\n",ret);
-		// gfxFlushBuffers();
+		ret = httpcSetKeepAlive(&context, HTTPC_KEEPALIVE_ENABLED);
+		printf("return from httpcSetKeepAlive: %"PRIx32"\n",ret);
+		gfxFlushBuffers();
 
 		// Set a User-Agent header so websites can identify your application
 		ret = httpcAddRequestHeaderField(&context, "User-Agent", "httpc-example/1.0.0");
 		printf("return from httpcAddRequestHeaderField: %"PRIx32"\n",ret);
 		gfxFlushBuffers();
-
-		// Tell the server we can support Keep-Alive connections.
-		// This will delay connection teardown momentarily (typically 5s)
-		// in case there is another request made to the same server.
-		//ret = httpcAddRequestHeaderField(&context, "Connection", "Keep-Alive");
-		printf("return from httpcAddRequestHeaderField: %"PRIx32"\n",ret);
 
 		// Set a Content-Type header so websites can identify the format of our raw body data.
 		// If you want to send form data in your request, use:
@@ -49,6 +43,7 @@ Result http_post(const char* url, const char* data)
 		// If you want to send raw JSON data in your request, use:
 		ret = httpcAddRequestHeaderField(&context, "Content-Type", "application/json");
 		printf("return from httpcAddRequestHeaderField: %"PRIx32"\n",ret);
+		gfxFlushBuffers();
 
 		// Post specified data.
 		// If you want to add a form field to your request, use:
