@@ -54,7 +54,7 @@ Result http_download(const char *url)
 		}
 
 		if ((statuscode >= 301 && statuscode <= 303) || (statuscode >= 307 && statuscode <= 308)) {
-			if(newurl==NULL) newurl = malloc(0x1000); // One 4K page for new URL
+			if(newurl==NULL) newurl = (char*)malloc(0x1000); // One 4K page for new URL
 			if (newurl==NULL){
 				httpcCloseContext(&context);
 				return -1;
@@ -97,7 +97,7 @@ Result http_download(const char *url)
 		size += readsize; 
 		if (ret == (s32)HTTPC_RESULTCODE_DOWNLOADPENDING){
 				lastbuf = buf; // Save the old pointer, in case realloc() fails.
-				buf = realloc(buf, size + 0x1000);
+				buf = (u8*)realloc(buf, size + 0x1000);
 				if(buf==NULL){ 
 					httpcCloseContext(&context);
 					free(lastbuf);
@@ -116,7 +116,7 @@ Result http_download(const char *url)
 
 	// Resize the buffer back down to our actual final size
 	lastbuf = buf;
-	buf = realloc(buf, size);
+	buf = (u8*)realloc(buf, size);
 	if(buf==NULL){ // realloc() failed.
 		httpcCloseContext(&context);
 		free(lastbuf);
