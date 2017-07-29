@@ -16,17 +16,14 @@ Result http_download(const char *url)
 	u8 *buf, *lastbuf;
 
 	printf("Downloading %s\n",url);
-	gfxFlushBuffers();
 
 	do {
 		ret = httpcOpenContext(&context, HTTPC_METHOD_GET, url, 1);
 		printf("return from httpcOpenContext: %"PRId32"\n",ret);
-		gfxFlushBuffers();
 
 		// This disables SSL cert verification, so https:// will be usable
 		ret = httpcSetSSLOpt(&context, SSLCOPT_DisableVerify);
 		printf("return from httpcSetSSLOpt: %"PRId32"\n",ret);
-		gfxFlushBuffers();
 
 		// Enable Keep-Alive connections (on by default, pending ctrulib merge)
 		// ret = httpcSetKeepAlive(&context, HTTPC_KEEPALIVE_ENABLED);
@@ -36,14 +33,12 @@ Result http_download(const char *url)
 		// Set a User-Agent header so websites can identify your application
 		ret = httpcAddRequestHeaderField(&context, "User-Agent", "httpc-example/1.0.0");
 		printf("return from httpcAddRequestHeaderField: %"PRId32"\n",ret);
-		gfxFlushBuffers();
 
 		// Tell the server we can support Keep-Alive connections.
 		// This will delay connection teardown momentarily (typically 5s)
 		// in case there is another request made to the same server.
 		ret = httpcAddRequestHeaderField(&context, "Connection", "Keep-Alive");
 		printf("return from httpcAddRequestHeaderField: %"PRId32"\n",ret);
-		gfxFlushBuffers();
 
 		ret = httpcBeginRequest(&context);
 		if(ret!=0){
@@ -88,7 +83,6 @@ Result http_download(const char *url)
 	}
 
 	printf("reported size: %"PRId32"\n",contentsize);
-	gfxFlushBuffers();
 
 	// Start with a single page buffer
 	buf = (u8*)malloc(0x1000);
@@ -132,7 +126,6 @@ Result http_download(const char *url)
 	}
 
 	printf("downloaded size: %"PRId32"\n",size);
-	gfxFlushBuffers();
 
 	if(size>(240*400*3*2))size = 240*400*3*2;
 
@@ -168,7 +161,6 @@ int main()
 	// Try the following for redirection to the above URL.
 	// ret=http_download("http://tinyurl.com/hd8jwqx");
 	printf("return from http_download: %"PRId32"\n",ret);
-	gfxFlushBuffers();
 
 	// Main loop
 	while (aptMainLoop())
@@ -182,9 +174,6 @@ int main()
 		if (kDown & KEY_START)
 			break; // break in order to return to hbmenu
 
-		// Flush and swap framebuffers
-		gfxFlushBuffers();
-		gfxSwapBuffers();
 	}
 
 	// Exit services
