@@ -19,25 +19,25 @@ Result http_download(const char *url)
 
 	do {
 		ret = httpcOpenContext(&context, HTTPC_METHOD_GET, url, 1);
-		printf("return from httpcOpenContext: %"PRId32"\n",ret);
+		printf("return from httpcOpenContext: %" PRId32 "\n",ret);
 
 		// This disables SSL cert verification, so https:// will be usable
 		ret = httpcSetSSLOpt(&context, SSLCOPT_DisableVerify);
-		printf("return from httpcSetSSLOpt: %"PRId32"\n",ret);
+		printf("return from httpcSetSSLOpt: %" PRId32 "\n",ret);
 
 		// Enable Keep-Alive connections
 		ret = httpcSetKeepAlive(&context, HTTPC_KEEPALIVE_ENABLED);
-		printf("return from httpcSetKeepAlive: %"PRId32"\n",ret);
+		printf("return from httpcSetKeepAlive: %" PRId32 "\n",ret);
 
 		// Set a User-Agent header so websites can identify your application
 		ret = httpcAddRequestHeaderField(&context, "User-Agent", "httpc-example/1.0.0");
-		printf("return from httpcAddRequestHeaderField: %"PRId32"\n",ret);
+		printf("return from httpcAddRequestHeaderField: %" PRId32 "\n",ret);
 
 		// Tell the server we can support Keep-Alive connections.
 		// This will delay connection teardown momentarily (typically 5s)
 		// in case there is another request made to the same server.
 		ret = httpcAddRequestHeaderField(&context, "Connection", "Keep-Alive");
-		printf("return from httpcAddRequestHeaderField: %"PRId32"\n",ret);
+		printf("return from httpcAddRequestHeaderField: %" PRId32 "\n",ret);
 
 		ret = httpcBeginRequest(&context);
 		if(ret!=0){
@@ -67,7 +67,7 @@ Result http_download(const char *url)
 	} while ((statuscode >= 301 && statuscode <= 303) || (statuscode >= 307 && statuscode <= 308));
 
 	if(statuscode!=200){
-		printf("URL returned status: %"PRId32"\n", statuscode);
+		printf("URL returned status: %" PRId32 "\n", statuscode);
 		httpcCloseContext(&context);
 		if(newurl!=NULL) free(newurl);
 		return -2;
@@ -81,7 +81,7 @@ Result http_download(const char *url)
 		return ret;
 	}
 
-	printf("reported size: %"PRId32"\n",contentsize);
+	printf("reported size: %" PRId32 "\n",contentsize);
 
 	// Start with a single page buffer
 	buf = (u8*)malloc(0x1000);
@@ -124,7 +124,7 @@ Result http_download(const char *url)
 		return -1;
 	}
 
-	printf("downloaded size: %"PRId32"\n",size);
+	printf("downloaded size: %" PRId32 "\n",size);
 
 	if(size>(240*400*3*2))size = 240*400*3*2;
 
@@ -159,7 +159,7 @@ int main()
 	ret=http_download("http://devkitpro.org/misc/httpexample_rawimg.rgb");
 	// Try the following for redirection to the above URL.
 	// ret=http_download("http://tinyurl.com/hd8jwqx");
-	printf("return from http_download: %"PRId32"\n",ret);
+	printf("return from http_download: %" PRId32 "\n",ret);
 
 	// Main loop
 	while (aptMainLoop())
