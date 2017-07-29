@@ -24,7 +24,7 @@ Result http_post(const char* url, const char* data)
 		ret = httpcSetSSLOpt(&context, SSLCOPT_DisableVerify);
 		printf("return from httpcSetSSLOpt: %" PRIx32 "\n",ret);
 
-		// Enable Keep-Alive connections (on by default, pending ctrulib merge)
+		// Enable Keep-Alive connections
 		ret = httpcSetKeepAlive(&context, HTTPC_KEEPALIVE_ENABLED);
 		printf("return from httpcSetKeepAlive: %" PRIx32 "\n",ret);
 
