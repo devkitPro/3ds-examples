@@ -14,28 +14,23 @@ Result http_post(const char* url, const char* data)
 	u32 contentsize=0, readsize=0, size=0;
 	u8 *buf, *lastbuf;
 
-	printf("POSTing %s\n",url);
-	gfxFlushBuffers();
+	printf("POSTing %s\n", url);
 
 	do {
 		ret = httpcOpenContext(&context, HTTPC_METHOD_POST, url, 0);
 		printf("return from httpcOpenContext: %"PRIx32"\n",ret);
-		gfxFlushBuffers();
 
 		// This disables SSL cert verification, so https:// will be usable
 		ret = httpcSetSSLOpt(&context, SSLCOPT_DisableVerify);
 		printf("return from httpcSetSSLOpt: %"PRIx32"\n",ret);
-		gfxFlushBuffers();
 
 		// Enable Keep-Alive connections (on by default, pending ctrulib merge)
 		ret = httpcSetKeepAlive(&context, HTTPC_KEEPALIVE_ENABLED);
 		printf("return from httpcSetKeepAlive: %"PRIx32"\n",ret);
-		gfxFlushBuffers();
 
 		// Set a User-Agent header so websites can identify your application
 		ret = httpcAddRequestHeaderField(&context, "User-Agent", "httpc-example/1.0.0");
 		printf("return from httpcAddRequestHeaderField: %"PRIx32"\n",ret);
-		gfxFlushBuffers();
 
 		// Set a Content-Type header so websites can identify the format of our raw body data.
 		// If you want to send form data in your request, use:
@@ -43,7 +38,6 @@ Result http_post(const char* url, const char* data)
 		// If you want to send raw JSON data in your request, use:
 		ret = httpcAddRequestHeaderField(&context, "Content-Type", "application/json");
 		printf("return from httpcAddRequestHeaderField: %"PRIx32"\n",ret);
-		gfxFlushBuffers();
 
 		// Post specified data.
 		// If you want to add a form field to your request, use:
@@ -53,8 +47,6 @@ Result http_post(const char* url, const char* data)
 		// If you want to add raw data to your request, use:
 		ret = httpcAddPostDataRaw(&context, (u32*)data, strlen(data));
 		printf("return from httpcAddPostDataRaw: %"PRIx32"\n",ret);
-
-		gfxFlushBuffers();
 
 		ret = httpcBeginRequest(&context);
 		if(ret!=0){
@@ -99,7 +91,6 @@ Result http_post(const char* url, const char* data)
 	}
 
 	printf("reported size: %"PRIx32"\n",contentsize);
-	gfxFlushBuffers();
 
 	// Start with a single page buffer
 	buf = (u8*)malloc(0x1000);
@@ -143,7 +134,6 @@ Result http_post(const char* url, const char* data)
 	}
 
 	printf("response size: %"PRIx32"\n",size);
-	gfxFlushBuffers();
 
 	// Print result
 	printf((char*)buf);
@@ -183,9 +173,6 @@ int main()
 		if (kDown & KEY_START)
 			break; // break in order to return to hbmenu
 
-		// Flush and swap framebuffers
-		gfxFlushBuffers();
-		gfxSwapBuffers();
 	}
 
 	// Exit services
