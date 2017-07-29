@@ -3,11 +3,13 @@
 	This code was modified for the last time on: 12/12/2014 21:00 UTC+1
 */
 
+//You need to declare the libraries to import, at the begining of your code. You will always include 3ds.h library
 #include <3ds.h>
 #include <stdio.h>
 
 int main(int argc, char **argv)
 {
+	//Initialize grapahics
 	gfxInitDefault();
 
 	//Initialize console on top screen. Using NULL as the second argument tells the console library to use the internal console structure as current one
