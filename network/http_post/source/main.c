@@ -18,26 +18,26 @@ Result http_post(const char* url, const char* data)
 
 	do {
 		ret = httpcOpenContext(&context, HTTPC_METHOD_POST, url, 0);
-		printf("return from httpcOpenContext: %"PRIx32"\n",ret);
+		printf("return from httpcOpenContext: %" PRIx32 "\n",ret);
 
 		// This disables SSL cert verification, so https:// will be usable
 		ret = httpcSetSSLOpt(&context, SSLCOPT_DisableVerify);
-		printf("return from httpcSetSSLOpt: %"PRIx32"\n",ret);
+		printf("return from httpcSetSSLOpt: %" PRIx32 "\n",ret);
 
 		// Enable Keep-Alive connections (on by default, pending ctrulib merge)
 		ret = httpcSetKeepAlive(&context, HTTPC_KEEPALIVE_ENABLED);
-		printf("return from httpcSetKeepAlive: %"PRIx32"\n",ret);
+		printf("return from httpcSetKeepAlive: %" PRIx32 "\n",ret);
 
 		// Set a User-Agent header so websites can identify your application
 		ret = httpcAddRequestHeaderField(&context, "User-Agent", "httpc-example/1.0.0");
-		printf("return from httpcAddRequestHeaderField: %"PRIx32"\n",ret);
+		printf("return from httpcAddRequestHeaderField: %" PRIx32 "\n",ret);
 
 		// Set a Content-Type header so websites can identify the format of our raw body data.
 		// If you want to send form data in your request, use:
 		//ret = httpcAddRequestHeaderField(&context, "Content-Type", "multipart/form-data");
 		// If you want to send raw JSON data in your request, use:
 		ret = httpcAddRequestHeaderField(&context, "Content-Type", "application/json");
-		printf("return from httpcAddRequestHeaderField: %"PRIx32"\n",ret);
+		printf("return from httpcAddRequestHeaderField: %" PRIx32 "\n",ret);
 
 		// Post specified data.
 		// If you want to add a form field to your request, use:
@@ -46,7 +46,7 @@ Result http_post(const char* url, const char* data)
 		//ret = httpcAddPostDataBinary(&context, "field name", yourBinaryData, length);
 		// If you want to add raw data to your request, use:
 		ret = httpcAddPostDataRaw(&context, (u32*)data, strlen(data));
-		printf("return from httpcAddPostDataRaw: %"PRIx32"\n",ret);
+		printf("return from httpcAddPostDataRaw: %" PRIx32 "\n",ret);
 
 		ret = httpcBeginRequest(&context);
 		if(ret!=0){
@@ -133,14 +133,14 @@ Result http_post(const char* url, const char* data)
 		return -1;
 	}
 
-	printf("response size: %"PRIx32"\n",size);
+	printf("response size: %" PRIx32 "\n",size);
 
 	// Print result
 	printf((char*)buf);
-
+	printf("\n");
+	
 	gfxFlushBuffers();
 	gfxSwapBuffers();
-	gspWaitForVBlank();
 
 	httpcCloseContext(&context);
 	free(buf);
@@ -158,8 +158,7 @@ int main()
 	consoleInit(GFX_BOTTOM,NULL);
 
 	ret=http_post("http://httpbin.org/post", "{\"foo\": \"bar\"}");
-	printf("return from http_post: %"PRIx32"\n",ret);
-	gfxFlushBuffers();
+	printf("return from http_post: %" PRIx32 "\n",ret);
 
 	// Main loop
 	while (aptMainLoop())
