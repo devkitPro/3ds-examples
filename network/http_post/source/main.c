@@ -76,7 +76,7 @@ Result http_post(const char* url, const char* data)
 	} while ((statuscode >= 301 && statuscode <= 303) || (statuscode >= 307 && statuscode <= 308));
 
 	if(statuscode!=200){
-		printf("URL returned status: %"PRIx32"\n", statuscode);
+		printf("URL returned status: %" PRIx32 "\n", statuscode);
 		httpcCloseContext(&context);
 		if(newurl!=NULL) free(newurl);
 		return -2;
@@ -90,7 +90,7 @@ Result http_post(const char* url, const char* data)
 		return ret;
 	}
 
-	printf("reported size: %"PRIx32"\n",contentsize);
+	printf("reported size: %" PRIx32 "\n",contentsize);
 
 	// Start with a single page buffer
 	buf = (u8*)malloc(0x1000);
