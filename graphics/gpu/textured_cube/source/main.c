@@ -1,8 +1,9 @@
 #include <3ds.h>
 #include <citro3d.h>
+#include <tex3ds.h>
 #include <string.h>
 #include "vshader_shbin.h"
-#include "kitten_bin.h"
+#include "kitten_t3x.h"
 
 #define CLEAR_COLOR 0x68B0D8FF
 
@@ -97,6 +98,18 @@ static void* vbo_data;
 static C3D_Tex kitten_tex;
 static float angleX = 0.0, angleY = 0.0;
 
+// Helper function for loading a texture from memory
+static bool loadTextureFromMem(C3D_Tex* tex, C3D_TexCube* cube, const void* data, size_t size)
+{
+	Tex3DS_Texture t3x = Tex3DS_TextureImport(data, size, tex, cube, false);
+	if (!t3x)
+		return false;
+
+	// Delete the t3x object since we don't need it
+	Tex3DS_TextureFree(t3x);
+	return true;
+}
+
 static void sceneInit(void)
 {
 	// Load the vertex shader, create a shader program and bind it
@@ -133,8 +146,8 @@ static void sceneInit(void)
 	BufInfo_Add(bufInfo, vbo_data, sizeof(vertex), 3, 0x210);
 
 	// Load the texture and bind it to the first texture unit
-	C3D_TexInit(&kitten_tex, 64, 64, GPU_RGBA8);
-	C3D_TexUpload(&kitten_tex, kitten_bin);
+	if (!loadTextureFromMem(&kitten_tex, NULL, kitten_t3x, kitten_t3x_size))
+		svcBreak(USERBREAK_PANIC);
 	C3D_TexSetFilter(&kitten_tex, GPU_LINEAR, GPU_NEAREST);
 	C3D_TexBind(0, &kitten_tex);
 

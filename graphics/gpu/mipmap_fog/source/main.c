@@ -1,8 +1,9 @@
 #include <3ds.h>
 #include <citro3d.h>
+#include <tex3ds.h>
 #include <string.h>
 #include "vshader_shbin.h"
-#include "logo_bin.h"
+#include "kitten_t3x.h"
 
 #define CLEAR_COLOR 0x68B0D8FF
 
@@ -134,8 +135,7 @@ static void sceneInit(void)
 	BufInfo_Add(bufInfo, vbo_data, sizeof(vertex), 3, 0x210);
 
 	// Load the texture and bind it to the first texture unit
-	C3D_TexInitMipmap(&logo_tex, 256, 128, GPU_RGB565);
-	C3D_TexLoadImage(&logo_tex, logo_bin, GPU_TEXFACE_2D, -1);
+	Tex3DS_TextureImport(kitten_t3x, kitten_t3x_size, &logo_tex, NULL, false);
 	C3D_TexSetFilter(&logo_tex, GPU_LINEAR, GPU_NEAREST);
 	C3D_TexSetFilterMipmap(&logo_tex, GPU_LINEAR);
 	C3D_TexBind(0, &logo_tex);

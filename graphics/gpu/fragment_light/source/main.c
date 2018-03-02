@@ -163,8 +163,8 @@ static void sceneRender(float iod)
 	// Rotate the cube each frame
 	if (iod >= 0.0f)
 	{
-		angleX += M_PI / 180;
-		angleY += M_PI / 360;
+		angleX += C3D_AngleFromDegrees(1.0);
+		angleY += C3D_AngleFromDegrees(0.5);
 	}
 
 	// Update the uniforms

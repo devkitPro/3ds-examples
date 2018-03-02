@@ -17,8 +17,6 @@
 .alias inpos v0
 .alias inclr v1
 
-.bool test
-
 .proc main
 	; Force the w component of inpos to be 1.0
 	mov r0.xyz, inpos

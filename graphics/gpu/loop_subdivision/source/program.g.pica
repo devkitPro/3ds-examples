@@ -31,80 +31,80 @@
 	mov r0,    myconst.xyxx
 	add r0.xy, vtx0[2].x, r0
 	add r0.y,  vtx1[2].x, r0
-	mova a01, r0
+	mova a0.xy, r0
 
 	mov r0.x, vtx0[2].x
 	mov r0.y, vtx1[2].x
 	mov r0.z, vtx2[2].x
 
-	mov r1, neighbors[   1]
-	mov r2, neighbors[a0+1]
-	mov r3, neighbors[a1+1]
+	mov r1, neighbors[     1]
+	mov r2, neighbors[a0.x+1]
+	mov r3, neighbors[a0.y+1]
 
 	slt r4, r0.w, r0
-	mad r1, r4.x, neighbors[   2], r1
-	mad r2, r4.y, neighbors[a0+2], r2
-	mad r3, r4.z, neighbors[a1+2], r3
-
-	add r0.w, one, r0
-	slt r4, r0.w, r0
-	mad r1, r4.x, neighbors[   3], r1
-	mad r2, r4.y, neighbors[a0+3], r2
-	mad r3, r4.z, neighbors[a1+3], r3
+	mad r1, r4.x, neighbors[     2], r1
+	mad r2, r4.y, neighbors[a0.x+2], r2
+	mad r3, r4.z, neighbors[a0.y+2], r3
 
 	add r0.w, one, r0
 	slt r4, r0.w, r0
-	mad r1, r4.x, neighbors[   4], r1
-	mad r2, r4.y, neighbors[a0+4], r2
-	mad r3, r4.z, neighbors[a1+4], r3
+	mad r1, r4.x, neighbors[     3], r1
+	mad r2, r4.y, neighbors[a0.x+3], r2
+	mad r3, r4.z, neighbors[a0.y+3], r3
 
 	add r0.w, one, r0
 	slt r4, r0.w, r0
-	mad r1, r4.x, neighbors[   5], r1
-	mad r2, r4.y, neighbors[a0+5], r2
-	mad r3, r4.z, neighbors[a1+5], r3
+	mad r1, r4.x, neighbors[     4], r1
+	mad r2, r4.y, neighbors[a0.x+4], r2
+	mad r3, r4.z, neighbors[a0.y+4], r3
 
 	add r0.w, one, r0
 	slt r4, r0.w, r0
-	mad r1, r4.x, neighbors[   6], r1
-	mad r2, r4.y, neighbors[a0+6], r2
-	mad r3, r4.z, neighbors[a1+6], r3
+	mad r1, r4.x, neighbors[     5], r1
+	mad r2, r4.y, neighbors[a0.x+5], r2
+	mad r3, r4.z, neighbors[a0.y+5], r3
 
 	add r0.w, one, r0
 	slt r4, r0.w, r0
-	mad r1, r4.x, neighbors[   7], r1
-	mad r2, r4.y, neighbors[a0+7], r2
-	mad r3, r4.z, neighbors[a1+7], r3
+	mad r1, r4.x, neighbors[     6], r1
+	mad r2, r4.y, neighbors[a0.x+6], r2
+	mad r3, r4.z, neighbors[a0.y+6], r3
 
 	add r0.w, one, r0
 	slt r4, r0.w, r0
-	mad r1, r4.x, neighbors[   8], r1
-	mad r2, r4.y, neighbors[a0+8], r2
-	mad r3, r4.z, neighbors[a1+8], r3
+	mad r1, r4.x, neighbors[     7], r1
+	mad r2, r4.y, neighbors[a0.x+7], r2
+	mad r3, r4.z, neighbors[a0.y+7], r3
 
 	add r0.w, one, r0
 	slt r4, r0.w, r0
-	mad r1, r4.x, neighbors[   9], r1
-	mad r2, r4.y, neighbors[a0+9], r2
-	mad r3, r4.z, neighbors[a1+9], r3
+	mad r1, r4.x, neighbors[     8], r1
+	mad r2, r4.y, neighbors[a0.x+8], r2
+	mad r3, r4.z, neighbors[a0.y+8], r3
 
 	add r0.w, one, r0
 	slt r4, r0.w, r0
-	mad r1, r4.x, neighbors[   10], r1
-	mad r2, r4.y, neighbors[a0+10], r2
-	mad r3, r4.z, neighbors[a1+10], r3
+	mad r1, r4.x, neighbors[     9], r1
+	mad r2, r4.y, neighbors[a0.x+9], r2
+	mad r3, r4.z, neighbors[a0.y+9], r3
 
 	add r0.w, one, r0
 	slt r4, r0.w, r0
-	mad r1, r4.x, neighbors[   11], r1
-	mad r2, r4.y, neighbors[a0+11], r2
-	mad r3, r4.z, neighbors[a1+11], r3
+	mad r1, r4.x, neighbors[     10], r1
+	mad r2, r4.y, neighbors[a0.x+10], r2
+	mad r3, r4.z, neighbors[a0.y+10], r3
 
 	add r0.w, one, r0
 	slt r4, r0.w, r0
-	mad r1, r4.x, neighbors[   12], r1
-	mad r2, r4.y, neighbors[a0+12], r2
-	mad r3, r4.z, neighbors[a1+12], r3
+	mad r1, r4.x, neighbors[     11], r1
+	mad r2, r4.y, neighbors[a0.x+11], r2
+	mad r3, r4.z, neighbors[a0.y+11], r3
+
+	add r0.w, one, r0
+	slt r4, r0.w, r0
+	mad r1, r4.x, neighbors[     12], r1
+	mad r2, r4.y, neighbors[a0.x+12], r2
+	mad r3, r4.z, neighbors[a0.y+12], r3
 
 	; Calculate new positions for vtx0
 	cmp three, lt, lt, r0.xy
@@ -178,7 +178,7 @@ calc_iter1:
 	add r1, vtx2[0], r1
 	mul r1, odd_masks.x, r1
 	mov r2, vtx0[0]
-	add r2, neighbors[a0+1], r2
+	add r2, neighbors[a0.x+1], r2
 	mad outpos, r2, odd_masks.y, r1
 	mov r2, vtx1[1]
 	add r2, vtx2[1], r2
@@ -204,7 +204,7 @@ calc_iter1:
 	add r1, vtx0[0], r1
 	mul r1, odd_masks.x, r1
 	mov r2, vtx1[0]
-	add r2, neighbors[a1+1], r2
+	add r2, neighbors[a0.y+1], r2
 	mad outpos, r2, odd_masks.y, r1
 	mov r2, vtx2[1]
 	add r2, vtx0[1], r2
