@@ -1,0 +1,148 @@
+; Example PICA200 vertex shader
+
+; Uniforms
+.fvec projection[4], modelView[4]
+
+; Constants
+.constf myconst(0.0, 1.0, 2.0, 0.5)
+.alias  zeros myconst.xxxx ; Vector full of zeros
+.alias  ones  myconst.yyyy ; Vector full of ones
+.alias  twos  myconst.zzzz ; Vector full of twos
+.alias  half  myconst.wwww
+
+; Outputs
+.out outpos position
+.out outtc0 texcoord0
+.out outtc1 texcoord1
+.out outclr color
+.out outview view
+.out outnq normalquat
+
+; Inputs (defined as aliases for convenience)
+.alias inpos v0
+.alias intex v1
+.alias innrm v2
+.alias intng v3
+
+.proc main
+	; Force the w component of inpos to be 1.0
+	mov r0.xyz, inpos
+	mov r0.w,   ones
+
+	; r1 = modelView * inpos
+	dp4 r1.x, modelView[0], r0
+	dp4 r1.y, modelView[1], r0
+	dp4 r1.z, modelView[2], r0
+	dp4 r1.w, modelView[3], r0
+
+	; outview = -r1
+	mov outview, -r1
+
+	; outpos = projection * r1
+	dp4 outpos.x, projection[0], r1
+	dp4 outpos.y, projection[1], r1
+	dp4 outpos.z, projection[2], r1
+	dp4 outpos.w, projection[3], r1
+
+	; outtex = intex
+	mov outtc0, intex
+	mov outtc1, intex
+
+	; Transform the normal and tangent vector with the modelView matrix
+	; TODO: use a separate normal matrix that is the transpose of the inverse of modelView
+	; Trick: Assuming N and T are both unitary when they come in, after transformation
+	; they will both have the same modulus. We can shave off one extra dp3/rsq
+	dp3 r14.x, modelView[0], innrm
+	dp3 r14.y, modelView[1], innrm
+	dp3 r14.z, modelView[2], innrm
+	dp3 r12.x, modelView[0], intng
+	dp3 r12.y, modelView[1], intng
+	dp3 r12.z, modelView[2], intng
+	dp3 r6.x, r14, r14
+	rsq r6.x, r6.x
+	mul r14.xyz, r14.xyz, r6.x
+	mul r12.xyz, r12.xyz, r6.x
+
+	; Cross N x T = B
+	mul r13.xyz, r14.yzx, r12.zxy
+	mad r13.xyz, -r12.yzx, r14.zxy, r13
+
+	; Cross B x N = T (for ensuring orthonormalization)
+	mul r12.xyz, r13.yzx, r14.zxy
+	mad r12.xyz, -r14.yzx, r13.zxy, r12
+
+	; Readjust vectors for easier calculation:
+	; r12 = (Tx, Ty, Tz, Bz)
+	; r13 = (Tx, By, Nz, 1 )
+	; r14 = (Nx, Ny, Nz, Bx)
+	mov r12.w, r13.z
+	mov r14.w, r13.x
+	mov r13.x, r12.x
+	mov r13.z, r14.z
+	mov r13.w, ones
+
+	; Perform case discrimination
+	mov r11.z, zeros
+	sge r10, zeros, r14.z
+	mov r11.xyw, r13.zxzy
+	add r10, r10, r10
+	mad r11.y, r10, r11, -r11
+	cmp r11.xy, le, ge, r11.zw
+
+	ifc cmp.x
+		ifc cmp.y
+			; X case
+			; x = 1 + Tx - By - Nz
+			; y = +Ty + Bx
+			; z = +Tz + Nx
+			; w = +Bz - Ny
+			mov r13.yz, -r13
+			mov r14.y, -r14
+			dp4 r0.x, r13.w, r13
+			add r0.yzw, r12.yyzw, r14.wwxy
+		.else
+			; Y case
+			; x = +Ty + Bx
+			; y = 1 - Tx + By - Nz
+			; z = +Bz + Ny
+			; w = -Tz + Nx 
+			mov r13.xz, -r13
+			mov r12.z, -r12
+			dp4 r0.y, r13.w, r13
+			add r0.xzw, r12.yywz, r14.wwyx
+		.end
+	.else
+		ifc cmp.y
+			; Z case
+			; x = +Tz + Nx
+			; y = +Bz + Ny
+			; z = 1 - Tx - By + Nz
+			; w = +Ty - Bx
+			mov r13.xy, -r13
+			mov r14.w, -r14
+			dp4 r0.z, r13.w, r13
+			add r0.xyw, r12.zwwy, r14.xyyw
+		.else
+			; W case
+			; x = +Bz - Ny
+			; y = -Tz + Nx 
+			; z = +Ty - Bx  
+			; w = 1 + Tx + By + Nz
+			mov r12.z, -r12
+			mov r14.yw, -r14
+			dp4 r0.w, r13.w, r13
+			add r0.xyz, r12.wzyy, r14.yxww
+		.end
+	.end
+
+	; Renormalize quaternion and output
+	dp4 r1.x, r0, r0
+	rsq r1.x, r1.x
+	mul outnq, r0, r1.x
+
+	; Output color
+	mov outclr, ones
+
+	; We're finished
+	end
+.end
