@@ -1,6 +1,6 @@
-SUBDIRS:= $(shell ls | egrep -v '^(CVS)$$')
-
 DATESTRING	:=	$(shell date +%Y)$(shell date +%m)$(shell date +%d)
+
+MAKEFILES := $(shell find . -mindepth 2 -name Makefile)
 
 #---------------------------------------------------------------------------------
 all: examples
@@ -9,18 +9,19 @@ all: examples
 	@mkdir -p bin
 	@find . -name "*.3dsx" ! -path "./bin/*" -exec cp -fv {} bin \;
 
+#---------------------------------------------------------------------------------
 examples:
-	@for i in $(SUBDIRS); do if test -e $$i/Makefile ; then $(MAKE) -C $$i || { exit 1;} fi; done;
+#---------------------------------------------------------------------------------
+	@for i in $(MAKEFILES); do $(MAKE) -C `dirname $$i` || exit 1; done;
 
 #---------------------------------------------------------------------------------
 clean:
 #---------------------------------------------------------------------------------
 	@rm -fr bin
 	@rm -f *.bz2
-	@for i in $(SUBDIRS); do if test -e $$i/Makefile ; then $(MAKE)  -C $$i clean || { exit 1;} fi; done;
+	@for i in $(MAKEFILES); do $(MAKE) -C `dirname $$i` clean || exit 1; done;
 
 #---------------------------------------------------------------------------------
 dist: clean
 #---------------------------------------------------------------------------------
-	@rm -fr bin
-	@tar --exclude=.svn --exclude=*CVS* -cvjf 3ds-examples-$(DATESTRING).tar.bz2 *
+	@tar -cvjf 3ds-examples-$(DATESTRING).tar.bz2 *
