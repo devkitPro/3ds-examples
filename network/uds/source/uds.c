@@ -138,6 +138,8 @@ void uds_test()
 		}
 
 		strncpy(tmpstr, (char*)&out_appdata[4], sizeof(out_appdata)-5);
+		tmpstr[sizeof(out_appdata)-6]='\0';
+
 		printf("String from network appdata: %s\n", (char*)&out_appdata[4]);
 
 		hidScanInput();//Normally you would only connect as a regular client.
@@ -200,6 +202,8 @@ void uds_test()
 		}
 
 		strncpy(tmpstr, (char*)&out_appdata[4], sizeof(out_appdata)-5);
+		tmpstr[sizeof(out_appdata)-6]='\0';
+
 		printf("String from appdata: %s\n", (char*)&out_appdata[4]);
 
 		con_type = 1;
