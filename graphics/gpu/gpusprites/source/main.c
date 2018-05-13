@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define MAX_SPRITES   256
+#define MAX_SPRITES   768
 #define SCREEN_WIDTH  400
 #define SCREEN_HEIGHT 240
 
