@@ -46,8 +46,6 @@ static void sceneExit(void)
 
 int main()
 {
-	romfsInit();
-	sdmcInit();
 	cfguInit(); // Allow C2D_FontLoadSystem to work
 	// Initialize the libs
 	gfxInitDefault();
