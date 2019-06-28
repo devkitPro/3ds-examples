@@ -89,6 +89,8 @@ int main()
 	// Deinitialize the libs
 	C2D_Fini();
 	C3D_Fini();
+	romfsExit();
+	cfguExit();
 	gfxExit();
 	return 0;
 }
