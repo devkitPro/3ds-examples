@@ -42,6 +42,9 @@ static void sceneExit(void)
 {
 	// Delete the text buffers
 	C2D_TextBufDelete(g_staticBuf);
+	C2D_FontFree(font[0]);
+	C2D_FontFree(font[1]);
+	C2D_FontFree(font[2]);
 }
 
 int main()
