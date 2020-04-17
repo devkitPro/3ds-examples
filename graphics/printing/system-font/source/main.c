@@ -6,7 +6,7 @@
 
 static const char teststring[] =
 	"Hello World - now with citro2d!\n"
-	"The quick brown fox jumped over the lazy dog.\n"
+	"The quick brown fox jumps over the lazy dog.\n"
 	"\n"
 	"En français: Vous ne devez pas éteindre votre console.\n"
 	"日本語文章を見せるのも出来ますよ。\n"
