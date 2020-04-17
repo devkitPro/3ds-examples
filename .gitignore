@@ -6,4 +6,5 @@ lib/
 *.smdh
 *.elf
 *.t3x
+*.bcfnt
 *~
