@@ -27,17 +27,17 @@
 
 static const char *PATH = "romfs:/sample.opus";  // Path to Opus file to play
 
-static const int SAMPLE_RATE = 48000;  		     // Opus is fixed at 48kHz
+static const int SAMPLE_RATE = 48000;            // Opus is fixed at 48kHz
 static const int SAMPLES_PER_BUF = SAMPLE_RATE * 120 / 1000;  // 120ms buffer
 static const int CHANNELS_PER_SAMPLE = 2;        // We ask libopusfile for
                                                  // stereo output; it will down
                                                  // -mix for us as necessary.
 
-static const int THREAD_AFFINITY = -1;  	     // Execute thread on any core
+static const int THREAD_AFFINITY = -1;           // Execute thread on any core
 static const int THREAD_STACK_SZ = 32 * 1024;    // 32kB stack for audio thread
 
 static const size_t WAVEBUF_SIZE = SAMPLES_PER_BUF * CHANNELS_PER_SAMPLE
-    * sizeof(int16_t);						     // Size of NDSP wavebufs
+    * sizeof(int16_t);                           // Size of NDSP wavebufs
 
 // ---- END DEFINITIONS ----
 
@@ -137,7 +137,7 @@ bool audioInit(void) {
 
     for(size_t i = 0; i < ARRAY_SIZE(s_waveBufs); ++i) {
         s_waveBufs[i].data_vaddr = buffer;
-        s_waveBufs[i].status	 = NDSP_WBUF_DONE;
+        s_waveBufs[i].status     = NDSP_WBUF_DONE;
 
         buffer += WAVEBUF_SIZE / sizeof(buffer[0]);
     }
