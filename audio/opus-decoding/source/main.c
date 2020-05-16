@@ -96,7 +96,7 @@ const char *opusStrError(int error)
 }
 
 // Pause until user presses a button
-void waitForInput() {
+void waitForInput(void) {
 	printf("Press any button to exit...\n");
 	while(aptMainLoop())
 	{
@@ -113,7 +113,7 @@ void waitForInput() {
 
 // Audio initialisation code
 // This sets up NDSP and our primary audio buffer
-bool audioInit() {
+bool audioInit(void) {
 	// Setup NDSP
 	ndspChnReset(0);
 	ndspChnWaveBufClear(0);
@@ -147,8 +147,8 @@ bool audioInit() {
 
 // Audio de-initialisation code
 // Stops playback and frees the primary audio buffer
-void audioExit() {
-	ndspChnWaveBufClear(0);
+void audioExit(void) {
+	ndspChnReset(0);
 	linearFree(s_audioBuffer);
 }
 
@@ -335,8 +335,8 @@ int main(int argc, char* argv[]) {
 	threadFree(threadId);
 
 	// Cleanup audio things and de-init platform features
-	ndspExit();
 	audioExit();
+	ndspExit();
 	op_free(opusFile);
 
 	romfsExit();
