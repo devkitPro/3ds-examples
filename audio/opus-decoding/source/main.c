@@ -116,8 +116,6 @@ void waitForInput(void) {
 bool audioInit(void) {
     // Setup NDSP
     ndspChnReset(0);
-    ndspChnWaveBufClear(0);
-
     ndspSetOutputMode(NDSP_OUTPUT_STEREO);
     ndspChnSetInterp(0, NDSP_INTERP_POLYPHASE);
     ndspChnSetRate(0, SAMPLE_RATE);
