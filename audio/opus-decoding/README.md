@@ -11,14 +11,19 @@ You can install the necessary packages with the following command:
 pacman -S 3ds-opusfile 3ds-pkg-config
 ```
 
+Note that on some systems, you may need to use `dkp-pacman` instead of `pacman`, and you may need to prefix the installation commands with `sudo`.
+
 Additionally, if you do not already have `pkg-config` installed on your *host system*, you will need to install it using your package manager.
 
-On Windows and macOS:
+On Windows:
 ```bash
-dkp-pacman -S pkg-config
+pacman -S pkg-config
 ```
 
-Note that on some systems, you may need to use `dkp-pacman` instead of `pacman`, and you may need to prefix the installation commands with `sudo`.
+On macOS:
+```bash
+sudo dkp-pacman -S pkg-config
+```
 
 ## Further reading
 

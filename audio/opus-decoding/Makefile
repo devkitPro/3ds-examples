@@ -50,14 +50,14 @@ CFLAGS	:=	-g -Wall -O2 -mword-relocations \
 			-ffunction-sections \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS `arm-none-eabi-pkg-config opusfile --cflags`
+CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS `$(PREFIX)pkg-config opusfile --cflags`
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lctru -lm `arm-none-eabi-pkg-config opusfile --libs` 
+LIBS	:= -lctru -lm `$(PREFIX)pkg-config opusfile --libs` 
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
