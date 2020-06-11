@@ -1,40 +1,35 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <3ds.h>
 
 int main()
 {
-	gfxInitDefault(); // Init graphic stuff
+	gfxInitDefault();
+	consoleInit(GFX_TOP, NULL);
 
-	// We need these 2 buffers for APT_DoAppJump() later.
-	u8 param[0x300];
-	u8 hmac[0x20];
+	printf("APT chainload example\n");
+	printf("Press A to chainload to EUR camera app\n");
+	printf("Press START to exit\n");
 
-	// Loop as long as the status is not exit
-	while(aptMainLoop())
+	while (aptMainLoop())
 	{
-		// Scan hid shared memory for input events
+		gspWaitForVBlank();
+		gfxSwapBuffers();
 		hidScanInput();
 
-		if(hidKeysDown() & KEY_A) // If the A button got pressed, start the app launch
+		u32 kDown = hidKeysDown();
+
+		if (kDown & KEY_START)
+			break;
+
+		if (kDown & KEY_A) // If the A button got pressed, start the app launch
 		{
-			// Clear both buffers
-			memset(param, 0, sizeof(param));
-			memset(hmac, 0, sizeof(hmac));
-
-			// Prepare for the app launch
-			APT_PrepareToDoApplicationJump(0, 0x0004001000022400LL, 0); // *EUR* camera app title ID
-			// Tell APT to trigger the app launch and set the status of this app to exit
-			APT_DoApplicationJump(param, sizeof(param), hmac);
+			aptSetChainloader(0x0004001000022400LL, 0); // *EUR* camera app title ID
+			break;
 		}
-
-		// Flush + swap framebuffers and wait for VBlank. Not really needed in this example
-		gfxFlushBuffers();
-		gfxSwapBuffers();
-		gspWaitForVBlank();
 	}
 
 	gfxExit();
-
 	return 0;
 }
