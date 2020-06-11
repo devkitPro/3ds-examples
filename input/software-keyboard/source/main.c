@@ -25,11 +25,11 @@ int main(int argc, char **argv)
 	consoleInit(GFX_TOP, NULL);
 
 	printf("Software keyboard demo - by fincs\n");
-	printf("Press A to bring up text input\n");
-	printf("Press B to bring up numpad input\n");
-	printf("Press X to bring up western input\n");
-	printf("Press Y to bring up text filter demo\n");
-	printf("Press START to exit\n");
+	printf("A: text input\n");
+	printf("B: numpad input\n");
+	printf("X: western input\n");
+	printf("Y: filtered input + HOME/POWER/reset handling\n");
+	printf("START: exit\n");
 
 	while (aptMainLoop())
 	{
@@ -94,8 +94,33 @@ int main(int argc, char **argv)
 			didit = true;
 			swkbdInit(&swkbd, SWKBD_TYPE_WESTERN, 2, -1);
 			swkbdSetValidation(&swkbd, SWKBD_NOTEMPTY_NOTBLANK, 0, 0);
+			swkbdSetFeatures(&swkbd, SWKBD_DARKEN_TOP_SCREEN | SWKBD_ALLOW_HOME | SWKBD_ALLOW_RESET | SWKBD_ALLOW_POWER);
 			swkbdSetFilterCallback(&swkbd, MyCallback, NULL);
-			button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
+
+			bool shouldQuit = false;
+			mybuf[0] = 0;
+			do
+			{
+				swkbdSetInitialText(&swkbd, mybuf);
+				button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
+				if (button != SWKBD_BUTTON_NONE)
+					break;
+
+				SwkbdResult res = swkbdGetResult(&swkbd);
+				if (res == SWKBD_RESETPRESSED)
+				{
+					shouldQuit = true;
+					aptSetChainloaderToSelf();
+					break;
+				}
+				else if (res != SWKBD_HOMEPRESSED && res != SWKBD_POWERPRESSED)
+					break; // An actual error happened, display it
+
+				shouldQuit = !aptMainLoop();
+			} while (!shouldQuit);
+
+			if (shouldQuit)
+				break;
 		}
 
 		if (didit)
