@@ -27,7 +27,7 @@ sudo dkp-pacman -S pkg-config
 
 ## Further reading
 
-In addition to the detailed comments in `main.c` and the docs for [opusfile](https://www.opus-codec.org/docs/#developing-with-opusfile-api-reference) and [libctru](https://smealum.github.io/ctrulib/), see also [David Gow's OpenAL-based example](https://davidgow.net/hacks/opusal.html) which was indispensable when writing this code.
+In addition to the detailed comments in `main.c` and the docs for [opusfile](https://www.opus-codec.org/docs/#developing-with-opusfile-api-reference) and [libctru](https://libctru.devkitpro.org/), see also [David Gow's OpenAL-based example](https://davidgow.net/hacks/opusal.html) which was indispensable when writing this code.
 
 ## Credits
 

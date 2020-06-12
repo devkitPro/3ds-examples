@@ -1,5 +1,5 @@
 /*
-	Colored Text example made by Aurelio Mannara for ctrulib
+	Colored Text example made by Aurelio Mannara for libctru
 	This code was modified for the last time on: 12/12/2014 23:00 UTC+1
 
 */
@@ -15,7 +15,7 @@ int main(int argc, char **argv)
 	//Initialize console on top screen. Using NULL as the second argument tells the console library to use the internal console structure as current one
 	consoleInit(GFX_TOP, NULL);
 
-	//Move the cursor to row 15 and column 19 and then prints "Hello World!" 
+	//Move the cursor to row 15 and column 19 and then prints "Hello World!"
 	//To move the cursor you have to print "\x1b[r;cH", where r and c are respectively
 	//the row and column where you want your cursor to move
 	//The top screen has 30 rows and 50 columns
@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 	//Print a REALLY crappy poeam with colored text
 	//\x1b[cm set a SGR (Select Graphic Rendition) parameter, where c is the parameter that you want to set
 	//Please refer to http://en.wikipedia.org/wiki/ANSI_escape_code#CSI_codes to see all the possible SGR parameters
-	//As of now ctrulib support only these parameters:
+	//As of now libctru support only these parameters:
 	//Reset (0), Half bright colors (2), Reverse (7), Text color (30-37) and Background color (40-47)
 	printf("Roses are \x1b[31mred\x1b[0m\n");
 	printf("Violets are \x1b[34mblue\x1b[0m\n");
@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 	//Black text on white background
 	//In this example we set two parameter in a single escape sequence by separating them by a semicolon
 	//\x1b[47;30m means that it will set a white background (47) and it will print white characters (30)
-	//In this we also could have used the 
+	//In this we also could have used the
 	printf("\x1b[47;30mBlack text on white background\x1b[0m");
 
 
@@ -64,6 +64,6 @@ int main(int argc, char **argv)
 
 	// Exit services
 	gfxExit();
-	
+
 	return 0;
 }

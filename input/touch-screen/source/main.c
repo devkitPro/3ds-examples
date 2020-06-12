@@ -1,6 +1,6 @@
 /*
-	Touch Screen example made by Aurelio Mannara for ctrulib
-	Please refer to https://github.com/smealum/ctrulib/blob/master/libctru/include/3ds/services/hid.h for more information
+	Touch Screen example made by Aurelio Mannara for libctru
+	Please refer to https://github.com/devkitPro/libctru/blob/master/libctru/include/3ds/services/hid.h for more information
 	This code was modified for the last time on: 12/13/2014 2:30 UTC+1
 
 	This wouldn't be possible without the amazing work done by:
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 
 		//Print the touch screen coordinates
 		printf("\x1b[2;0H%03d; %03d", touch.px, touch.py);
-		
+
 
 		// Flush and swap framebuffers
 		gfxFlushBuffers();

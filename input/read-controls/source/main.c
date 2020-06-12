@@ -1,6 +1,6 @@
 /*
-	Circle Pad example made by Aurelio Mannara for ctrulib
-	Please refer to https://github.com/smealum/ctrulib/blob/master/libctru/include/3ds/services/hid.h for more information
+	Circle Pad example made by Aurelio Mannara for libctru
+	Please refer to https://github.com/devkitPro/libctru/blob/master/libctru/include/3ds/services/hid.h for more information
 	This code was modified for the last time on: 12/13/2014 2:20 UTC+1
 
 	This wouldn't be possible without the amazing work done by:

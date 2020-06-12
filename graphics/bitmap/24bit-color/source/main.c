@@ -1,5 +1,5 @@
 /*
-	Hello World example made by Aurelio Mannara for ctrulib
+	Hello World example made by Aurelio Mannara for libctru
 	This code was modified for the last time on: 12/13/2014 01:00 UTC+1
 
 	This wouldn't be possible without the amazing work done by:
@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 
 	//Get the bottom screen's frame buffer
 	u8* fb = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
-	
+
 	//Copy our image in the bottom screen's frame buffer
 	memcpy(fb, brew_bgr, brew_bgr_size);
 
