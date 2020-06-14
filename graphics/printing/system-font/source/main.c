@@ -15,7 +15,7 @@ static const char teststring[] =
 	"Я очень рад, ведь я, наконец, возвращаюсь домой\n";
 
 C2D_TextBuf g_staticBuf, g_dynamicBuf;
-C2D_Text g_staticText[5];
+C2D_Text g_staticText[4];
 
 static void sceneInit(void)
 {
