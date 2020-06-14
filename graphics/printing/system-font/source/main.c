@@ -15,7 +15,7 @@ static const char teststring[] =
 	"Я очень рад, ведь я, наконец, возвращаюсь домой\n";
 
 C2D_TextBuf g_staticBuf, g_dynamicBuf;
-C2D_Text g_staticText[3];
+C2D_Text g_staticText[4];
 
 static void sceneInit(void)
 {
@@ -28,11 +28,13 @@ static void sceneInit(void)
 	C2D_TextParse(&g_staticText[0], g_staticBuf, teststring);
 	C2D_TextParse(&g_staticText[1], g_staticBuf, "I am red skinny text!");
 	C2D_TextParse(&g_staticText[2], g_staticBuf, "I am blue fat text!");
+	C2D_TextParse(&g_staticText[3], g_staticBuf, "I am justified text!");
 
 	// Optimize the static text strings
 	C2D_TextOptimize(&g_staticText[0]);
 	C2D_TextOptimize(&g_staticText[1]);
 	C2D_TextOptimize(&g_staticText[2]);
+	C2D_TextOptimize(&g_staticText[3]);
 }
 
 static void sceneRender(float size)
@@ -41,10 +43,10 @@ static void sceneRender(float size)
 	C2D_TextBufClear(g_dynamicBuf);
 
 	// Draw static text strings
-	float text2PosX = 400.0f - 16.0f - g_staticText[2].width*0.75f; // right-justify
 	C2D_DrawText(&g_staticText[0], 0, 8.0f, 8.0f, 0.5f, size, size);
 	C2D_DrawText(&g_staticText[1], C2D_AtBaseline | C2D_WithColor, 16.0f, 210.0f, 0.5f, 0.5f, 0.75f, C2D_Color32f(1.0f,0.0f,0.0f,1.0f));
-	C2D_DrawText(&g_staticText[2], C2D_AtBaseline | C2D_WithColor, text2PosX, 210.0f, 0.5f, 0.75f, 0.5f, C2D_Color32f(0.0f,0.0f,1.0f,0.625f));
+	C2D_DrawText(&g_staticText[2], C2D_AtBaseline | C2D_WithColor | C2D_AlignRight, 384.0f, 210.0f, 0.5f, 0.75f, 0.5f, C2D_Color32f(0.0f,0.0f,1.0f,0.625f));
+	C2D_DrawText(&g_staticText[3], C2D_AtBaseline | C2D_AlignJustified | C2D_WordWrap, 100.0f, 170.0f, 0.5f, 0.75f, 0.75f, 200.0f);
 
 	// Generate and draw dynamic text
 	char buf[160];
@@ -52,7 +54,7 @@ static void sceneRender(float size)
 	snprintf(buf, sizeof(buf), "Current text size: %f (Use  to change)", size);
 	C2D_TextParse(&dynText, g_dynamicBuf, buf);
 	C2D_TextOptimize(&dynText);
-	C2D_DrawText(&dynText, 0, 8.0f, 220.0f, 0.5f, 0.5f, 0.5f);
+	C2D_DrawText(&dynText, C2D_AlignCenter, 200.0f, 220.0f, 0.5f, 0.5f, 0.5f);
 }
 
 static void sceneExit(void)
