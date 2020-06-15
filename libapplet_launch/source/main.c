@@ -56,8 +56,7 @@ int main()
 			else continue;
 
 			memset(aptbuf, 0, sizeof(aptbuf));
-			if (!aptLaunchLibraryApplet(appId, aptbuf, sizeof(aptbuf), 0))
-				break;
+			aptLaunchLibraryApplet(appId, aptbuf, sizeof(aptbuf), 0);
 			printf("Library applet exited\n");
 		}
 	}
