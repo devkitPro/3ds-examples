@@ -253,6 +253,8 @@ int main()
 		gfxSwapBuffers();
 	}
 
+	printf("CAMU_StopCapture: 0x%08X\n", (unsigned int)CAMU_StopCapture(PORT_BOTH));
+
 	// Close camera event handles
 	for (int i = 0; i < 4; i++)
 	{
@@ -261,8 +263,6 @@ int main()
 			svcCloseHandle(camReceiveEvent[i]);
 		}
 	}
-
-	rintf("CAMU_StopCapture: 0x%08X\n", (unsigned int)CAMU_StopCapture(PORT_BOTH));
 
 	printf("CAMU_Activate: 0x%08X\n", (unsigned int)CAMU_Activate(SELECT_NONE));
 
