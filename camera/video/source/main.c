@@ -204,10 +204,10 @@ int main()
 		if (captureInterrupted)
 		{
 			printf("CAMU_StartCapture: 0x%08X\n", (unsigned int)CAMU_StartCapture(PORT_BOTH));
-			captureInterrupted=false;
+			captureInterrupted = false;
 		}
-		
-		printf("svcWaitSynchronization: 0x%08X\n", (unsigned int)svcWaitSynchronizationN(&index, camReceiveEvent, 4, false, WAIT_TIMEOUT));
+
+		printf("svcWaitSynchronizationN: 0x%08X\n", (unsigned int)svcWaitSynchronizationN(&index, camReceiveEvent, 4, false, WAIT_TIMEOUT));
 		switch (index)
 		{
 		case 0:
@@ -215,12 +215,14 @@ int main()
 			camReceiveEvent[2] = 0;
 
 			captureInterrupted = true;
+			continue; //skip screen update
 			break;
 		case 1:
 			svcCloseHandle(camReceiveEvent[3]);
 			camReceiveEvent[3] = 0;
 
 			captureInterrupted = true;
+			continue; //skip screen update
 			break;
 		case 2:
 			printf("svcCloseHandle: 0x%08X\n", (unsigned int)svcCloseHandle(camReceiveEvent[2]));
@@ -234,25 +236,22 @@ int main()
 			break;
 		}
 
-		if (!captureInterrupted)
+		if (CONFIG_3D_SLIDERSTATE > 0.0f)
 		{
-			if (CONFIG_3D_SLIDERSTATE > 0.0f)
-			{
-				gfxSet3D(true);
-				writePictureToFramebufferRGB565(gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL), buf, 0, 0, WIDTH, HEIGHT);
-				writePictureToFramebufferRGB565(gfxGetFramebuffer(GFX_TOP, GFX_RIGHT, NULL, NULL), buf + SCREEN_SIZE, 0, 0, WIDTH, HEIGHT);
-			}
-			else
-			{
-				gfxSet3D(false);
-				writePictureToFramebufferRGB565(gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL), buf, 0, 0, WIDTH, HEIGHT);
-			}
-
-			// Flush and swap framebuffers
-			gfxFlushBuffers();
-			gspWaitForVBlank();
-			gfxSwapBuffers();
+			gfxSet3D(true);
+			writePictureToFramebufferRGB565(gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL), buf, 0, 0, WIDTH, HEIGHT);
+			writePictureToFramebufferRGB565(gfxGetFramebuffer(GFX_TOP, GFX_RIGHT, NULL, NULL), buf + SCREEN_SIZE, 0, 0, WIDTH, HEIGHT);
 		}
+		else
+		{
+			gfxSet3D(false);
+			writePictureToFramebufferRGB565(gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL), buf, 0, 0, WIDTH, HEIGHT);
+		}
+
+		// Flush and swap framebuffers
+		gfxFlushBuffers();
+		gspWaitForVBlank();
+		gfxSwapBuffers();
 	}
 
 	printf("CAMU_StopCapture: 0x%08X\n", (unsigned int)CAMU_StopCapture(PORT_BOTH));
