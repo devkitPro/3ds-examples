@@ -47,10 +47,10 @@ GFXBUILD	:=	$(ROMFS)
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 
 CFLAGS	:=	-g -Wall -O2 -mword-relocations \
-			-fomit-frame-pointer -ffunction-sections \
+			-ffunction-sections \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS
+CFLAGS	+=	$(INCLUDE) -D__3DS__
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
@@ -109,6 +109,7 @@ endif
 ifeq ($(GFXBUILD),$(BUILD))
 #---------------------------------------------------------------------------------
 export T3XFILES :=  $(GFXFILES:.t3s=.t3x)
+export EFONTFILES	:=  $(FONTFILES:.ttf=.bcfnt)
 #---------------------------------------------------------------------------------
 else
 #---------------------------------------------------------------------------------
@@ -123,7 +124,7 @@ export OFILES_SOURCES 	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
 
 export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES)) \
 			$(PICAFILES:.v.pica=.shbin.o) $(SHLISTFILES:.shlist=.shbin.o) \
-			$(addsuffix .o,$(T3XFILES))
+			$(addsuffix .o,$(T3XFILES)) $(addsuffix .o,$(EFONTFILES))
 
 export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
 
@@ -217,9 +218,15 @@ $(OUTPUT).elf	:	$(OFILES)
 	@$(bin2o)
 
 #---------------------------------------------------------------------------------
-.PRECIOUS	:	%.t3x
+.PRECIOUS	:	%.t3x %.bcfnt
 #---------------------------------------------------------------------------------
 %.t3x.o	%_t3x.h :	%.t3x
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	@$(bin2o)
+
+#---------------------------------------------------------------------------------
+%.bcfnt.o	%_bcfnt.h :	%.bcfnt
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	@$(bin2o)
