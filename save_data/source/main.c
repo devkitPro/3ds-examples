@@ -1,6 +1,6 @@
 /*
 	Save data example made by TheGag96 for libctru
-	This code was modified for the last time on: 11/10/2021 19:42 CST
+	This code was modified for the last time on: 11/13/2021 19:52 CST
 */
 
 #include <3ds.h>
@@ -20,30 +20,30 @@ static const FS_Path EMPTY_PATH = { PATH_EMPTY, 0, NULL };
 bool createSave() {
   FS_Archive archiveHandle = 0;
 
-  Result rc = FSUSER_FormatSaveData(ARCHIVE_SAVEDATA, EMPTY_PATH, 128 /* x 512 bytes */, 7, 7, 7, 7, false);
+  //The third argument needs to be less than or equal to SaveDataSize in resources/cia-info.rsf and be a multiple of 64 KiB
+  Result rc = FSUSER_FormatSaveData(ARCHIVE_SAVEDATA, EMPTY_PATH, 512 /* bytes */, 7, 7, 7, 7, false);
 
-  if (rc) {
-    printf("\x1b[16;1Hcouldn't format: %08lX\x1b[K", rc);
+  if (R_FAILED(rc)) {
+    printf("\x1b[16;1HCouldn't format: %08lX\x1b[K", rc);
     return false;
   }
 
   rc = FSUSER_OpenArchive(&archiveHandle, ARCHIVE_SAVEDATA, EMPTY_PATH);
 
-  if (rc) {
-    printf("\x1b[16;1Hcouldn't open archive: %08lX\x1b[K", rc);
+  if (R_FAILED(rc)) {
+    printf("\x1b[16;1HCouldn't open archive: %08lX\x1b[K", rc);
     return false;
   }
 
   SaveFile saveFile;
   saveFile.hours = 7;
 
-  const char* sgPathText = "/save1.dat";
-  FS_Path sgPath = fsMakePath(PATH_ASCII, sgPathText);
+  FS_Path sgPath = fsMakePath(PATH_ASCII, "/save.dat");
 
   rc = FSUSER_CreateFile(archiveHandle, sgPath, 0, sizeof(saveFile));
 
-  if (rc) {
-    printf("\x1b[16;1Hcouldn't create file: %08lX\x1b[K", rc);
+  if (R_FAILED(rc)) {
+    printf("\x1b[16;1HCouldn't create file: %08lX\x1b[K", rc);
     FSUSER_CloseArchive(archiveHandle);
     return false;
   }
@@ -52,8 +52,8 @@ bool createSave() {
 
   rc = FSUSER_OpenFile(&fileHandle, archiveHandle, sgPath, 7, 0);
 
-  if (rc) {
-    printf("\x1b[16;1Hcouldn't open file: %08lX\x1b[K", rc);
+  if (R_FAILED(rc)) {
+    printf("\x1b[16;1HCouldn't open file: %08lX\x1b[K", rc);
     FSUSER_CloseArchive(archiveHandle);
     return false;
   }
@@ -61,8 +61,8 @@ bool createSave() {
   u32 bytesWritten;
   rc = FSFILE_Write(fileHandle, &bytesWritten, 0, &saveFile, sizeof(saveFile), 0);
 
-  if (rc) {
-    printf("\x1b[16;1Hcouldn't write file: %08lX\x1b[K", rc);
+  if (R_FAILED(rc) || bytesWritten != sizeof(saveFile)) {
+    printf("\x1b[16;1HCouldn't write file: %08lX\x1b[K", rc);
     FSFILE_Close(fileHandle);
     FSUSER_CloseArchive(archiveHandle);
     return false;
@@ -83,9 +83,10 @@ int main(int argc, char **argv)
 	//Initialize console on top screen. Using NULL as the second argument tells the console library to use the internal console structure as current one
 	consoleInit(GFX_TOP, NULL);
 
+  //Create the save file like a real 3DS app would
   createSave();
 
-	// Main loop
+	//Main loop
 	while (aptMainLoop())
 	{
 		//Scan all the inputs. This should be done once for each frame
@@ -96,7 +97,7 @@ int main(int argc, char **argv)
 
 		if (kDown & KEY_START) break; // break in order to return to hbmenu
 
-		// Flush and swap framebuffers
+		//Flush and swap framebuffers
 		gfxFlushBuffers();
 		gfxSwapBuffers();
 

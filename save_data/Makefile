@@ -41,8 +41,8 @@ GFXBUILD	:=	$(BUILD)
 #ROMFS		:=	romfs
 #GFXBUILD	:=	$(ROMFS)/gfx
 
-APP_TITLE := CIA Test
-APP_DESCRIPTION := CIA Test
+APP_TITLE := Save File CIA Test
+APP_DESCRIPTION := Save File CIA Test
 APP_AUTHOR := Author
 APP_ICON := ../resources/48x48.png
 APP_ICON_2 := resources/48x48.png
@@ -169,6 +169,10 @@ endif
 #---------------------------------------------------------------------------------
 all: $(BUILD) $(GFXBUILD) $(DEPSDIR) $(ROMFS_T3XFILES) $(T3XHFILES)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@bannertool makebanner -i resources/banner.png -a resources/jingle.wav -o "$(BUILD)/banner.bnr"
+	@bannertool makesmdh -s "$(APP_TITLE)" -l "$(APP_DESCRIPTION)" -p "$(APP_AUTHOR)" -i "$(APP_ICON_2)" -o "$(BUILD)/icon.icn"
+	@makerom -f cia -o "$(TARGET).cia" -DAPP_ENCRYPTED=false -elf "$(TARGET).elf" -rsf resources/cia-info.rsf -exefslogo -target t -icon "$(BUILD)/icon.icn" -banner "$(BUILD)/banner.bnr" -major 0 -minor 0 -micro 1
+	@echo "built cia"
 
 $(BUILD):
 	@mkdir -p $@
@@ -187,12 +191,6 @@ endif
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf $(GFXBUILD)
-
-cia: $(OUTPUT).elf
-	@bannertool makebanner -i resources/banner.png -a resources/jingle.wav -o "$(BUILD)/banner.bnr"
-	@bannertool makesmdh -s "$(APP_TITLE)" -l "$(APP_DESCRIPTION)" -p "$(APP_AUTHOR)" -i "$(APP_ICON_2)" -o "$(BUILD)/icon.icn"
-	@makerom -f cia -o "$(TARGET).cia" -DAPP_ENCRYPTED=false -elf "$(TARGET).elf" -rsf resources/cia-info.rsf -exefslogo -target t -icon "$(BUILD)/icon.icn" -banner "$(BUILD)/banner.bnr" -major 0 -minor 0 -micro 1
-	@echo "built cia"
 
 #---------------------------------------------------------------------------------
 $(GFXBUILD)/%.t3x	$(BUILD)/%.h	:	%.t3s

@@ -1,6 +1,6 @@
 BasicInfo:
-  Title                   : Test App
-  ProductCode             : CTR-P-TEST
+  Title                   : Save File CIA Test
+  ProductCode             : CTR-P-SAVT
   Logo                    : Nintendo # Nintendo / Licensed / Distributed / iQue / iQueForSystem
 
 #RomFs:
@@ -190,7 +190,7 @@ AccessControlInfo:
 
 
 SystemControlInfo:
-  SaveDataSize: 64K
+  SaveDataSize: 64K  # must be aligned to 64K
   RemasterVersion: 0
   StackSize: 0x40000
 
