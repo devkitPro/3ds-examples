@@ -114,7 +114,7 @@ int main(int argc, char** argv)
         else if (kDown & KEY_B)
             getInfo("MyFile.txt");
         else if (kDown & KEY_X)
-            getInfo("WEEYOU");
+            getInfo("MyDir");
 
         // Flush and swap framebuffers
         gfxFlushBuffers();
