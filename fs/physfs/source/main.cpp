@@ -14,9 +14,9 @@ static void listDirItems(const char* directory)
     std::vector<std::string> items;
     FileSystem::GetDirectoryItems(directory, items);
 
-    printf("Directory listing of %s", directory);
+    printf("Directory listing of %s\n", directory);
     for (const auto& filename : items)
-        printf("  -> %s", filename.c_str());
+        printf("  -> %s\n", filename.c_str());
 }
 
 static const char* getInfoType(const FileSystem::Info& info)
@@ -42,31 +42,43 @@ static void getInfo(const char* filepath)
 
     bool success = FileSystem::GetInfo(filepath, info);
 
-    printf("File Info of %s", filepath);
+    printf("File Info of %s\n", filepath);
 
     if (success)
     {
-        printf("  FileType: %s", getInfoType(info));
-        printf("  File Size: %lld", info.size);
+        printf("  FileType: %s\n", getInfoType(info));
+        printf("  File Size: %lld\n", info.size);
     }
     else
-        printf("  Failed to get info for %s!", filepath);
+        printf("  Failed to get info for %s!\n", filepath);
 }
 
 int main(int argc, char** argv)
 {
     gfxInitDefault();
-    consoleInit(GFX_TOP, NULL);
+
+    PrintConsole topScreen, bottomScreen;
+
+    consoleInit(GFX_TOP, &topScreen);
+    consoleInit(GFX_BOTTOM, &bottomScreen);
+
+    consoleSelect(&bottomScreen);
+    printf("Press A to iterate the save directory\n");
+    printf("Press B to get info about MyFile.txt\n");
+    printf("Press X to get info about MyDir\n");
+    printf("Press Start to quit\n");
+
+    consoleSelect(&topScreen);
 
     if (!PHYSFS_init(argv[0]))
-        printf("physfs failure: %s!", FileSystem::GetPhysfsError());
+        printf("physfs failure: %s!\n", FileSystem::GetPhysfsError());
 
     FileSystem::SetSource("game");
     FileSystem::SetIdentity("game", true);
 
     /* create a directory */
     bool success = FileSystem::CreateDirectory("MyDir");
-    printf("Directory Created: %d", success);
+    printf("Directory 'MyDir' Created: %d\n", success);
 
     /* create a file and write to it */
     FileSystem::File file{};
@@ -77,7 +89,7 @@ int main(int argc, char** argv)
 
     FileSystem::WriteFile(file, message, length);
     success = FileSystem::CloseFile(file);
-    printf("File Closed: %d", success);
+    printf("File Closed: %d\n", success);
 
     /* open our file for reading */
     FileSystem::OpenFile(file, "MyFile.txt", FileSystem::FileMode_Read);
@@ -87,7 +99,7 @@ int main(int argc, char** argv)
     int64_t size = FileSystem::ReadFile(file, buffer, file.GetSize());
 
     if (size != 0)
-        printf("File Contents: %s", buffer);
+        printf("File Contents: %s\n", buffer);
 
     while (aptMainLoop())
     {

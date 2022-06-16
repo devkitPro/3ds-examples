@@ -52,13 +52,13 @@ bool FileSystem::SetIdentity(const char* name, bool append)
     std::string old = FileSystem::savePath;
 
     FileSystem::savePath = FileSystem::Normalize(FileSystem::GetUserDirectory() + "/save/" + name);
-    printf("Save Path %s", savePath.c_str());
+    printf("Save Path set to %s\n", savePath.c_str());
 
     if (!old.empty())
         PHYSFS_unmount(old.c_str());
 
     int success = PHYSFS_mount(savePath.c_str(), NULL, append);
-    printf("Save Path mounted %d", success);
+    printf("Save Path mounted %d\n", success);
 
     PHYSFS_setWriteDir(nullptr);
 
@@ -91,18 +91,17 @@ bool FileSystem::SetupWriteDirectory()
 
         if (startPosition != std::string::npos)
             tmpDirectoryPath = tmpDirectoryPath.substr(startPosition);
-        printf("Temp Dir Path Fixed: %s", tmpDirectoryPath.c_str());
     }
 
     if (!PHYSFS_setWriteDir(tmpWritePath.c_str()))
     {
-        printf("Failed to set write dir to %s", tmpWritePath.c_str());
+        printf("Failed to set write dir to %s\n", tmpWritePath.c_str());
         return false;
     }
 
     if (!FileSystem::CreateDirectory(tmpDirectoryPath.c_str()))
     {
-        printf("Failed to create dir %s", tmpDirectoryPath.c_str());
+        printf("Failed to create dir %s\n", tmpDirectoryPath.c_str());
         /* clear the write directory in case of error */
         PHYSFS_setWriteDir(nullptr);
         return false;
@@ -110,13 +109,13 @@ bool FileSystem::SetupWriteDirectory()
 
     if (!PHYSFS_setWriteDir(savePath.c_str()))
     {
-        printf("Failed to set write dir to %s", savePath.c_str());
+        printf("Failed to set write dir to %s\n", savePath.c_str());
         return false;
     }
 
     if (!PHYSFS_mount(savePath.c_str(), nullptr, 0))
     {
-        printf("Failed to mount write dir (%s)", FileSystem::GetPhysfsError());
+        printf("Failed to mount write dir (%s)\n", FileSystem::GetPhysfsError());
         /* clear the write directory in case of error */
         PHYSFS_setWriteDir(nullptr);
         return false;
@@ -184,14 +183,14 @@ bool FileSystem::OpenFile(File& file, const char* name, FileMode mode)
 
     if (mode == FileMode_Read && !PHYSFS_exists(name))
     {
-        printf("Could not open file %s, does not exist.", name);
+        printf("Could not open file %s, does not exist.\n", name);
         return false;
     }
 
     if ((mode == FileMode_Write) &&
         (PHYSFS_getWriteDir() == nullptr && FileSystem::SetupWriteDirectory()))
     {
-        printf("Could not set write directory.");
+        printf("Could not set write directory.\n");
         return false;
     }
 
@@ -262,7 +261,7 @@ int64_t FileSystem::ReadFile(File& file, void* destination, int64_t size)
         size = file.GetSize();
     else if (size < 0)
     {
-        printf("Invalid read size %l.\n", size);
+        printf("Invalid read size %lld\n", size);
         return 0;
     }
 
