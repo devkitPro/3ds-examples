@@ -70,6 +70,7 @@ int main(int argc, char** argv)
 
     consoleSelect(&topScreen);
 
+    /* init can be passed NULL instead */
     if (!PHYSFS_init(argv[0]))
         printf("physfs failure: %s!\n", FileSystem::GetPhysfsError());
 
@@ -93,7 +94,7 @@ int main(int argc, char** argv)
 
     /* open our file for reading */
     FileSystem::OpenFile(file, "MyFile.txt", FileSystem::FileMode_Read);
-    char buffer[file.GetSize()];
+    char buffer[file.GetSize() + 1] = {'\0'};
 
     /* read the file contents and print them */
     int64_t size = FileSystem::ReadFile(file, buffer, file.GetSize());
