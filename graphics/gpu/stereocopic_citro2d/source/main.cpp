@@ -30,7 +30,7 @@ int main() {
 	C2D_Prepare();
 	consoleInit(GFX_BOTTOM, NULL);
 
-	printf("\x1b[1;1H Stereoscopic 3D with Citro2D\n");
+	printf("\x1b[1;1H Stereoscopic 3D with citro2d\n");
 
 	// Create targets for both eyes on the top screen
 	left = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
