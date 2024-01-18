@@ -22,8 +22,6 @@ typedef struct
 
 void staticDataBufferInit(StaticDataBuffer* buffer, void* data, size_t size)
 {
-    memset(buffer, 0, sizeof(StaticDataBuffer));
-
     buffer->data = (int16_t*)linearAlloc(size);
     buffer->size = size;
 
@@ -34,6 +32,16 @@ void staticDataBufferDestroy(StaticDataBuffer* buffer)
 {
     if (buffer)
         linearFree(buffer->data);
+}
+
+void audioCallback(void *const data) {
+    ndspWaveBuf *wbuf = data;
+
+    if(wbuf->status == NDSP_WBUF_DONE) {
+        printf("Playback complete, press Start to exit\n");
+        wbuf->status = NDSP_WBUF_FREE;
+        return;
+    }
 }
 
 int main(int argc, char **argv)
@@ -91,7 +99,7 @@ int main(int argc, char **argv)
     free(buffer);
     fclose(file);
 
-	if (decoder.plug == 0)
+    if (decoder.plug == 0)
         printf("Well shit, could not load file!\n");
     else
         ModPlug_SetMasterVolume(decoder.plug, 128);
@@ -120,12 +128,12 @@ int main(int argc, char **argv)
 
     size_t decoded = ModPlug_Read(decoder.plug, decodedBuffer, decoderSize);
 
-    StaticDataBuffer staticDataBuffer;
+    StaticDataBuffer staticDataBuffer = {0};
     staticDataBufferInit(&staticDataBuffer, decodedBuffer, decoded);
 
     printf("Decoded Size: %zu\n", decoded);
 
-    waveBuf.nsamples = ((decoded / 2) / 16 / 8);
+    waveBuf.nsamples = ((decoded / 2) / sizeof(int16_t));
     waveBuf.looping = false;
 
     waveBuf.data_pcm16 = (int16_t*)staticDataBuffer.data;
@@ -138,6 +146,7 @@ int main(int argc, char **argv)
 
     printf("Playing modplug file!\n");
     ndspChnWaveBufAdd(0, &waveBuf);
+    ndspSetCallback(audioCallback, &waveBuf);
 
     // Main loop
     while (aptMainLoop())
