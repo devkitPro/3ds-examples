@@ -14,33 +14,23 @@ typedef struct
     ModPlug_Settings settings;
 }  ModplugDecoder;
 
-typedef struct
-{
-    void* data;
-    size_t size;
-} StaticDataBuffer;
-
-void staticDataBufferInit(StaticDataBuffer* buffer, void* data, size_t size)
-{
-    buffer->data = (int16_t*)linearAlloc(size);
-    buffer->size = size;
-
-    memcpy(buffer->data, data, size);
-}
-
-void staticDataBufferDestroy(StaticDataBuffer* buffer)
-{
-    if (buffer)
-        linearFree(buffer->data);
-}
+// roughly a video frame's worth of audio
+static const size_t decoderBufSize = 800 * 2 * 2;
+static ModplugDecoder decoder;
+static ndspWaveBuf wavebufs[2];
+static int nextBuf = 0;
 
 void audioCallback(void *const data) {
-    ndspWaveBuf *wbuf = data;
+    if(wavebufs[nextBuf].status == NDSP_WBUF_DONE) {
+        size_t decoded = ModPlug_Read(decoder.plug, wavebufs[nextBuf].data_pcm16, decoderBufSize);
+        if (decoded!=0) {
+            wavebufs[nextBuf].nsamples = ((decoded / 2) / sizeof(int16_t));
+            DSP_FlushDataCache(wavebufs[nextBuf].data_pcm16, decoded);
 
-    if(wbuf->status == NDSP_WBUF_DONE) {
-        printf("Playback complete, press Start to exit\n");
-        wbuf->status = NDSP_WBUF_FREE;
-        return;
+            ndspChnWaveBufAdd(0, &wavebufs[nextBuf]);
+
+            nextBuf ^= 1;
+        }
     }
 }
 
@@ -53,9 +43,6 @@ int main(int argc, char **argv)
     ndspInit();
     romfsInit();
 
-    ModplugDecoder decoder;
-
-    /* set up ModPlug settings */
     decoder.settings.mFlags = MODPLUG_ENABLE_OVERSAMPLING | MODPLUG_ENABLE_NOISE_REDUCTION;
     decoder.settings.mChannels = 2;
     decoder.settings.mBits = 16;
@@ -75,78 +62,49 @@ int main(int argc, char **argv)
 
     ModPlug_SetSettings(&decoder.settings);
 
-    /* Get the file size via stat */
-
     struct stat fileStat;
     stat("romfs:/space_debris.mod", &fileStat);
     size_t bufferSize = fileStat.st_size;
 
-    /* Open the file for reading */
-
     FILE* file = fopen("romfs:/space_debris.mod", "rb");
-
-    /* Read the file into a buffer */
 
     void* buffer = (void*)malloc(bufferSize);
     fread(buffer, bufferSize, 1, file);
 
-    /* Load the ModPlug file from the buffer */
-
     decoder.plug = ModPlug_Load(buffer, bufferSize);
-
-    /* Free the useless buffer now and close the file handle */
 
     free(buffer);
     fclose(file);
 
-    if (decoder.plug == 0)
-        printf("Well shit, could not load file!\n");
-    else
+    if (decoder.plug == 0) {
+        printf("Couldn't load mod file!\n");
+    } else {
         ModPlug_SetMasterVolume(decoder.plug, 128);
 
-    /* Create a new ndspWaveBuf */
+        ndspChnReset(0);
+        ndspChnSetFormat(0, NDSP_FORMAT_STEREO_PCM16);
+        ndspChnSetRate(0, 44100);
+        ndspChnSetInterp(0, NDSP_INTERP_POLYPHASE);
 
-    ndspWaveBuf waveBuf;
+        // Set up audiobuffers using linearAlloc
+        // This ensures audio data is in contiguous physical ram
+        wavebufs[0].data_pcm16 = (int16_t*)linearAlloc(decoderBufSize);
+        wavebufs[0].looping = false;
+        wavebufs[0].status = NDSP_WBUF_DONE;
 
-    /*
-    ** Create static buffer data and use
-    ** a redundant size for the test.
-    **
-    ** == WARNING ==
-    ** Do not actually do this.
-    **
-    ** The decoder size should be looping
-    ** through calls to ModPlug_Read until nothing
-    ** can be read anymore.
-    **
-    ** Memory *may* get exhausted if too much is allocated.
-    ** Implement a way to check that, realloc, etc until a limit
-    ** of streaming data is hit.
-    */
-    size_t decoderSize = 524288 * 50;
-    void* decodedBuffer = (void*)malloc(decoderSize);
+        wavebufs[1].data_pcm16 = (int16_t*)linearAlloc(decoderBufSize);
+        wavebufs[1].looping = false;
+        wavebufs[1].status = NDSP_WBUF_DONE;
 
-    size_t decoded = ModPlug_Read(decoder.plug, decodedBuffer, decoderSize);
+        printf("Playing modplug file!\n");
 
-    StaticDataBuffer staticDataBuffer = {0};
-    staticDataBufferInit(&staticDataBuffer, decodedBuffer, decoded);
+        // Fill the two audio buffers
+        audioCallback(NULL);
+        audioCallback(NULL);
 
-    printf("Decoded Size: %zu\n", decoded);
-
-    waveBuf.nsamples = ((decoded / 2) / sizeof(int16_t));
-    waveBuf.looping = false;
-
-    waveBuf.data_pcm16 = (int16_t*)staticDataBuffer.data;
-    DSP_FlushDataCache(waveBuf.data_pcm16, decoded);
-
-    ndspChnReset(0);
-    ndspChnSetFormat(0, NDSP_FORMAT_STEREO_PCM16);
-    ndspChnSetRate(0, 44100);
-    ndspChnSetInterp(0, NDSP_INTERP_POLYPHASE);
-
-    printf("Playing modplug file!\n");
-    ndspChnWaveBufAdd(0, &waveBuf);
-    ndspSetCallback(audioCallback, &waveBuf);
+        // and chain the rest of the audio using the callback
+        ndspSetCallback(audioCallback, NULL);
+    }
 
     // Main loop
     while (aptMainLoop())
@@ -166,10 +124,12 @@ int main(int argc, char **argv)
         gspWaitForVBlank();
     }
 
-    if (decoder.plug != 0)
+    if (decoder.plug != 0) {
         ModPlug_Unload(decoder.plug);
+        linearFree(wavebufs[0].data_pcm16);
+        linearFree(wavebufs[1].data_pcm16);
+    }
 
-    staticDataBufferDestroy(&staticDataBuffer);
 
     romfsExit();
 
