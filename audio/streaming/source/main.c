@@ -15,7 +15,7 @@ void fill_buffer(void *audioBuffer,size_t offset, size_t size, int frequency ) {
 
 	u32 *dest = (u32*)audioBuffer;
 
-	for (int i=0; i<size; i++) {
+	for (size_t i=0; i<size; i++) {
 
 		s16 sample = INT16_MAX * sin(frequency*(2*M_PI)*(offset+i)/SAMPLERATE);
 
@@ -60,8 +60,8 @@ int main(int argc, char **argv) {
 	ndspChnSetMix(0, mix);
 
 	int notefreq[] = {
-		262, 294, 339, 349, 392, 440,
-		494, 440, 392, 349, 339, 294
+		262, 294, 330, 349, 392, 440,
+		494, 440, 392, 349, 330, 294
 	};
 
 	int note = 4;
