@@ -1,0 +1,89 @@
+; Uniforms
+.fvec proj[4]
+.fvec view[4]
+.fvec model[4]
+.fvec light_viewproj[4]
+
+; Constants
+.constf myconst(0.0, 1.0, -1.0, 0.5)
+.alias  zeros myconst.xxxx
+.alias  ones  myconst.yyyy
+.alias  half  myconst.wwww
+
+; Outputs
+.out outpos  position
+.out outview view
+.out outtc0  texcoord0.st
+.out -       texcoord0w outtc0.p
+.out outnq   normalquat
+.out outclr  color
+
+; Inputs (defined as aliases for convenience)
+.alias inpos v0
+.alias innrm v1
+
+.proc main
+    ; Force the w component of inpos to be 1.0
+    mov r0.xyz, inpos
+    mov r0.w,   ones
+
+    ; r2 = model * inpos
+    dp4 r2.x, model[0], r0
+    dp4 r2.y, model[1], r0
+    dp4 r2.z, model[2], r0
+    dp4 r2.w, model[3], r0
+
+    ; r0 = view * model
+    dp4 r0.x, view[0], r2
+    dp4 r0.y, view[1], r2
+    dp4 r0.z, view[2], r2
+    dp4 r0.w, view[3], r2
+
+    ; outview = -r0
+    mov outview, -r0
+
+    ; outpos = proj * r0
+    dp4 outpos.x, proj[0], r0
+    dp4 outpos.y, proj[1], r0
+    dp4 outpos.z, proj[2], r0
+    dp4 outpos.w, proj[3], r0
+
+    ; Calculate shadow map coords
+    dp4 r0.x, light_viewproj[0], r2
+    dp4 r0.y, light_viewproj[1], r2
+    dp4 r0.z, light_viewproj[2], r2
+    dp4 r0.w, light_viewproj[3], r2
+
+    ; outtc0 = (r0 / w) * 0.5 + 0.5
+    rcp r0.w, r0.w
+    mul r0, r0.w, r0
+    mov r1, half
+    mad outtc0, r0, r1, r1
+
+	; Transform the normal vector with the model matrix
+    ; TODO: use a separate normal matrix that is the transpose of the inverse of model
+    dp3 r14.x, model[0], innrm
+    dp3 r14.y, model[1], innrm
+    dp3 r14.z, model[2], innrm
+    dp3 r6.x, r14, r14
+    rsq r6.x, r6.x
+    mul r14.xyz, r14.xyz, r6.x
+
+    mov r0, myconst.yxxx
+    add r4, ones, r14.z
+    mul r4, half, r4
+    cmp zeros, ge, ge, r4.x
+    rsq r4, r4.x
+    mul r5, half, r14
+    jmpc cmp.x, degenerate
+
+    rcp r0.z, r4.x
+    mul r0.xy, r5, r4
+
+degenerate:
+    mov outnq, r0
+    mov outclr, ones
+
+    ; We're finished
+    end
+.end
