@@ -2,7 +2,7 @@
 # Requires bosstool from: https://github.com/yellows8/3dscrypto-tools
 # Builds the bossdata files @ web/boss/ used by this app.
 
-params="--input=bossinput --build --nsdataid=0x57524248"
+params="--input=bossinput --build --nsdataid=0x57524248 -p"
 echo -n "TestHello world from BOSS!" > bossinput
 mkdir -p web/boss
 bosstool --output=web/boss/JPN_bossdata0.bin --programID=0004003000008202 $params $1
