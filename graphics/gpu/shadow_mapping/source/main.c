@@ -49,7 +49,6 @@ static int shadow_receiver_uLoc_model, shadow_receiver_uLoc_view, shadow_receive
 
 static C3D_LightEnv lightEnv;
 static C3D_Light light;
-static C3D_LightLut lut_diffuse;
 static C3D_Mtx light_view;
 static C3D_Mtx light_proj;
 
@@ -62,11 +61,6 @@ static void* teapot_vbo_data;
 static void* teapot_ibo_data;
 
 static float elapsed;
-
-static float diffuse(float x, float arg)
-{
-    return x;
-}
 
 static void drawShadowMap()
 {
@@ -179,23 +173,20 @@ static void sceneInit(void)
     C3D_Material shadow_material =
     {
         { 0.5f, 0.5f, 0.5f },
-        { 0.0f, 0.0f, 0.0f },
-        { 0.0f, 0.0f, 0.0f },
         { 0.5f, 0.5f, 0.5f },
+        { 0.0f, 0.0f, 0.0f },
+        { 0.0f, 0.0f, 0.0f },
         { 0.0f, 0.0f, 0.0f },
     };
     C3D_LightEnvInit(&lightEnv);
     C3D_LightEnvMaterial(&lightEnv, &shadow_material);
-
-    LightLut_FromFunc(&lut_diffuse, diffuse, 0.0f, false);
-    C3D_LightEnvLut(&lightEnv, GPU_LUT_D1, GPU_LUTINPUT_LN, false, &lut_diffuse);
 
     C3D_LightInit(&light, &lightEnv);
     C3D_FVec lightPos = FVec4_New(1.0f, 1.0f, 1.0f, 0.0f);
     C3D_LightPosition(&light, &lightPos);
 
     C3D_LightShadowEnable(&light, true);
-    C3D_LightEnvShadowMode(&lightEnv, GPU_SHADOW_SECONDARY);
+    C3D_LightEnvShadowMode(&lightEnv, GPU_SHADOW_PRIMARY);
     // Shadow map must be on unit 0
     C3D_LightEnvShadowSel(&lightEnv, 0);
 }
@@ -208,10 +199,8 @@ static void sceneRender(float iod)
 
     C3D_TexEnv *env = C3D_GetTexEnv(0);
     C3D_TexEnvInit(env);
-    C3D_TexEnvSrc(env, C3D_RGB, GPU_FRAGMENT_PRIMARY_COLOR, GPU_FRAGMENT_SECONDARY_COLOR, 0);
-    C3D_TexEnvFunc(env, C3D_RGB, GPU_ADD);
-    C3D_TexEnvSrc(env, C3D_Alpha, GPU_PRIMARY_COLOR, 0, 0);
-    C3D_TexEnvFunc(env, C3D_Alpha, GPU_REPLACE);
+    C3D_TexEnvSrc(env, C3D_Both, GPU_FRAGMENT_PRIMARY_COLOR, 0, 0);
+    C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);
 
     C3D_Mtx proj;
     Mtx_PerspStereoTilt(&proj, C3D_AngleFromDegrees(20.0f), C3D_AspectRatioTop, 1.0f, 100.0f, iod, 8.0f, false);
