@@ -5,7 +5,7 @@
 
 void printTrackingData(const QtmTrackingData *data)
 {
-	printf("Flags:                 %d, %d, %d, %d      \n", data->eyesTracked, data->faceDetected, data->eyesDetected, data->clamped);
+	printf("Flags:                 %d, %d, %d, %d      \n", data->headTracked, data->faceDetected, data->eyesDetected, data->clamped);
 	printf("Confidence level:      %.4f         \n\n", data->confidenceLevel);
 
 	printf("Left eye X (cam):     % .4f        \n", data->eyeCameraCoordinates[QTM_EYE_LEFT][0]);
