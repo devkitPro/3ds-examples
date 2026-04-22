@@ -6,7 +6,7 @@
  * by Lauren Kelly (thejsa) with help from mtheall.
  * See the opus-decoding example for more details
  * 
- * Last update: 2024-03-31
+ * Last update: 2026-04-22
  */
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
@@ -129,7 +129,7 @@ bool audioInit(OggVorbis_File *vorbisFile_) {
 
     for(size_t i = 0; i < ARRAY_SIZE(s_waveBufs); ++i) {
         s_waveBufs[i].data_vaddr = buffer;
-        s_waveBufs[i].nsamples   = WAVEBUF_SIZE / sizeof(buffer[0]);
+        s_waveBufs[i].nsamples   = SAMPLES_PER_BUF; // stereo = two s16 played in parallel = still one sample for the dsp
         s_waveBufs[i].status     = NDSP_WBUF_DONE;
 
         buffer += WAVEBUF_SIZE / sizeof(buffer[0]);
@@ -154,11 +154,13 @@ bool fillBuffer(OggVorbis_File *vorbisFile_, ndspWaveBuf *waveBuf_) {
     osTickCounterStart(&timer);
     #endif  // DEBUG
 
+    const size_t CHANNELS_PER_SAMPLE = ndspChnGetFormat(0) == NDSP_FORMAT_STEREO_PCM16 ? 2 : 1;
+
     // Decode (2-byte) samples until our waveBuf is full
     int totalBytes = 0;
-    while(totalBytes < waveBuf_->nsamples * sizeof(s16)) {
+    while(totalBytes < waveBuf_->nsamples * sizeof(s16) * CHANNELS_PER_SAMPLE) {
         int16_t *buffer = waveBuf_->data_pcm16 + (totalBytes / sizeof(s16));
-        const size_t bufferSize = (waveBuf_->nsamples * sizeof(s16) - totalBytes);
+        const size_t bufferSize = (waveBuf_->nsamples * sizeof(s16) * CHANNELS_PER_SAMPLE - totalBytes);
 
         // Decode bufferSize bytes from vorbisFile_ into buffer,
         // storing the number of bytes that were read (or error)
@@ -185,7 +187,7 @@ bool fillBuffer(OggVorbis_File *vorbisFile_, ndspWaveBuf *waveBuf_) {
     // = for most cases
     // < for the last possible chunk of the file, which may have less samples before EOF
     // after which we don't care to recover the length
-    waveBuf_->nsamples = totalBytes / sizeof(s16);
+    waveBuf_->nsamples = totalBytes / sizeof(s16) / CHANNELS_PER_SAMPLE;
     ndspChnWaveBufAdd(0, waveBuf_);
     DSP_FlushDataCache(waveBuf_->data_pcm16, totalBytes);
 
